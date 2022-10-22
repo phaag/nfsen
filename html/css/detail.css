@@ -1,0 +1,64 @@
+/* css styles for netflow processing tbales */
+
+.TDnfprocLabel  { 
+    padding-left: 5px;
+    padding-right: 10px;
+    font-weight: bold;
+    background-color: #DDDDDD; 
+}
+
+.TDnfprocControl  { 
+    padding-left: 10px;
+    padding-right: 10px;
+    font-weight: bold;
+}
+
+.NfProcessing {
+	margin-top: 30px;
+	margin-bottom: 5px;
+}
+
+#lookupbox{ /*CSS for pop up hint box */
+	position:absolute;
+	top: 0;
+	background-color: lightyellow;
+	width: 400px; /*Default width of hint.*/ 
+	height: 180px; /*Default height of hint.*/ 
+	padding: 3px;
+	border:1px solid black;
+	font:normal 10px Verdana;
+	line-height:18px;
+	z-index:100;
+	border-right: 3px solid black;
+	border-bottom: 3px solid black;
+	visibility: hidden;
+}
+
+.flowlist {
+	color: black;
+	font-family:"Courier New", Courier, monospace;
+    font-size: 14px;
+}
+.flowlist a {
+	text-decoration: none;
+	color: black;
+	font-family:Courier,monospace;
+    font-size: 14px;
+}
+.flowlist a:visited { 
+	text-decoration: none;
+	color: black;
+	font-family:Courier,monospace;
+    font-size: 14px;
+}
+.flowlist a:active {
+	text-decoration: none;
+	font-family:Courier,monospace;
+    font-size: 14px;
+}
+.flowlist a:hover {
+	background: mediumspringgreen;
+	font-family:Courier,monospace;
+    font-size: 14px;
+}
+

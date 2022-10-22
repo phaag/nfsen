@@ -1,0 +1,888 @@
+#!%%PERL%% -w
+#
+#  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#   * Redistributions of source code must retain the above copyright notice,
+#     this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions and the following disclaimer in the documentation
+#     and/or other materials provided with the distribution.
+#   * Neither the name of SWITCH nor the names of its contributors may be
+#     used to endorse or promote products derived from this software without
+#     specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+#  $Author: peter $
+#
+#  $Id: nfsend 71 2017-01-19 16:16:21Z peter $
+#
+#  $LastChangedRevision: 71 $
+
+use strict;
+use warnings;
+use POSIX 'setsid';
+use POSIX ":sys_wait_h";
+use Sys::Syslog;
+
+use Data::Dumper;
+
+######################################
+#
+# Configuration: 
+# The only parameter to set:
+
+use lib "%%LIBEXECDIR%%";
+
+#
+######################################
+
+use NfSen;
+use NfSenRRD;
+use NfConf;
+use Nfsources;
+use Nfcomm;
+use Nfsync;
+use Log;
+
+my $VERSION = '$Id: nfsend 71 2017-01-19 16:16:21Z peter $';
+my $nfsen_version = "1.3.8";
+
+my $forever = 1;
+my $reload  = 0;
+
+my $unit = "nfsend";
+
+sub SetSignalHandlers {
+	$SIG{TERM} = sub { syslog('info', "$unit: Got SIGTERM"); $forever = 0; };
+	$SIG{HUP}  = sub { syslog('info', "$unit: Got SIGHUP");  $forever = 0; $reload = 1; };
+	$SIG{USR1} = sub { syslog('info', "$unit: Got SIGUSR1"); $forever = 0; $reload = 1; };
+	$SIG{INT}  = sub { syslog('info', "$unit: Got SIGINT");  $forever = 0; };
+} # End of SetSignalHandlers
+
+my $comm_pid	 = undef;		# pid of comm server
+my $pidfile		 = 'nfsend.pid';
+
+our $child_exit	 = 0;
+our %PIDlist;
+our $lastcycle;
+
+$SIG{'__DIE__'} = sub {
+	my $why = shift;
+	
+	print "PANIC nfsend dies: $why";
+	syslog('err', "PANIC $unit dies: $why");
+	if ( $unit ne "nfsend" ) {
+		return;
+	}
+
+	if ( $comm_pid && kill( 0, $comm_pid) ) {
+		syslog('debug',"Signal comm server to terminate");
+		kill 'TERM', $comm_pid || warn "Can't signal comm server: $! ";
+		wait;	# for comm server to terminate
+	}
+	unlink "$NfConf::PIDDIR/nfsend.pid";
+};
+
+sub SIG_CHILD {
+	my $which_child  = undef;
+	my $waitedpid 	 = 0;
+    my $child;
+	my $expected;
+
+	if ( $forever ) {
+		$expected = 'unexpected';
+	} else {
+		$expected = 'expected';
+	}
+
+    while (($waitedpid = waitpid(-1,WNOHANG)) > 0) {
+		$child_exit = $?;
+		my $exit_value  = $child_exit >> 8;
+		my $signal_num  = $child_exit & 127;
+		my $dumped_core = $child_exit & 128;
+		if ( $exit_value || $signal_num || $dumped_core ) {
+			syslog('debug', "$unit: exit child[$waitedpid] Exit: $exit_value, Signal: $signal_num, Core: $dumped_core");
+		}
+
+		if ( exists $PIDlist{$waitedpid} ) {
+			syslog('debug', "Expected child[$waitedpid] terminated");
+			delete $PIDlist{$waitedpid};
+		}
+
+		if ( defined $comm_pid && $waitedpid == $comm_pid ) {
+			$which_child = "Comm Server[$waitedpid]. Process died.";
+		}
+
+		syslog('err', "$expected exit of child $which_child" ) if defined $which_child;
+		if ( $which_child && $forever ) {
+        	syslog('err', "Try to restart NfSen");
+			$forever = 0; 
+			$reload = 1;
+		}
+	
+    }
+    $SIG{CHLD} = \&SIG_CHILD;  # loathe sysV
+
+} # End of SIG_CHILD
+
+sub daemonize {
+	my $pidfile = shift;
+
+	chdir '/'				  || die "Can't chdir to /: $!";
+	open STDIN, '/dev/null'   || die "Can't read /dev/null: $!";
+	open STDOUT, '>/dev/null' || die "Can't write to /dev/null: $!";
+	open STDERR, '>/dev/null' || die "Can't write to /dev/null: $!";
+	defined(my $pid = fork)   || die "Can't fork: $!";
+	if ( $pid ) { 
+		# we are the parent processs
+		if ( defined $pidfile ) {
+			unlink $pidfile;
+			open PID, ">$pidfile" || die "Can't open pid file: $!\n";
+			print PID "$pid\n";
+			if ( !close PID ) {
+				my $err = $!;
+				kill 15, $pid;
+				syslog('err', "Error startup nfsend: $err");
+				die "Unable to write PID file: $err";
+			}
+		}
+		exit;
+	}
+	setsid or die "Can't start a new session: $!";
+
+} # End of daemonize
+
+sub CheckLockLive {
+	my %profileinfo = NfProfile::ReadProfile('live', '.');
+
+	if ( $profileinfo{'locked'} ) {
+		syslog('err', "ERROR profile 'live' locked! Unlock for clean startup!");
+		$profileinfo{'locked'} = 0;
+		if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+			syslog('err', "Error writing profile 'live': $Log::ERROR");
+		}
+	} 
+
+} # End of CheckLockLive
+
+sub CheckSubHierarchy {
+	my $hints = shift;
+
+	my %profileinfo = NfProfile::ReadProfile('live', '.');
+	
+	if ( $profileinfo{'size'} == 0 ) {
+		return;
+	}
+
+	if ( $$$hints{'subdirlayout'} != $NfConf::SUBDIRLAYOUT ) {
+		syslog('err', "Verification sub hierarchy failed.");
+		syslog('err', "Current layout is '$$$hints{'subdirlayout'}' but configured layout is '$NfConf::SUBDIRLAYOUT'");
+		syslog('err', "Rerun RebuildHierarchy.pl to fix.");
+
+		print "Verification sub hierarchy failed.\n";
+		print "Current layout is '$$$hints{'subdirlayout'}' but configured layout is '$NfConf::SUBDIRLAYOUT'\n";
+		print "Rerun RebuildHierarchy.pl to fix.\n";
+		print "nfsend not started.\n";
+		exit(0);
+	}
+
+} # End of CheckSubHierarchy
+
+sub SignalPeriodic {
+	my $status = shift;
+
+	my $flag = $status == 1 ? 'start-periodic' : 'end-periodic';
+
+	my %out_list;
+	my $nfsend_socket;
+	my $timeout = 10;
+	if ( $nfsend_socket = Nfcomm::nfsend_connect($timeout) ) {
+		my $status = Nfcomm::nfsend_comm($nfsend_socket, 
+			'signal', { 'flag' => $flag }, \%out_list, { 'timeout' => $timeout } );
+		if ( $status =~ /^ERR/ ) {
+			syslog('err', "nfsend: $status");
+		}
+	} else {
+		syslog('err', "Can not connect to nfsend");
+	}
+	Nfcomm::nfsend_disconnect($nfsend_socket);
+
+	syslog('debug', "Signal '$flag'");
+
+} # End of SignalPeriodic
+
+sub Periodic {
+	my $timeslot 		= shift;
+
+	syslog('debug', "Run periodic at " . scalar localtime($timeslot));
+
+	my $save_slot = $timeslot;
+	$timeslot -= $NfConf::CYCLETIME;
+
+	my %profileinfo = NfProfile::ReadProfile('live', '.');
+	if ( $profileinfo{'updated'} >= $timeslot ) {
+		syslog('debug', "No update required. Last successful update was " . scalar localtime($profileinfo{'updated'}));
+		return;
+	}
+	my $t_iso = NfSen::UNIX2ISO($timeslot);
+	my $subdirs = NfSen::SubdirHierarchy($timeslot);
+
+	my @AllProfileGroups = NfProfile::ProfileGroups();
+
+	# create argument list specific for each channel
+	# at the moment this contains of all channels in a continues profile
+	my @ProfileOptList;
+	foreach my $profilegroup ( @AllProfileGroups ) {
+		my @AllProfiles = NfProfile::ProfileList($profilegroup);
+		if ( scalar @AllProfiles == 0 ) {
+			syslog('err', $Log::ERROR) if defined $Log::ERROR;
+			return;
+		}
+
+		foreach my $profilename ( @AllProfiles ) {
+			my %profileinfo = NfProfile::ReadProfile($profilename, $profilegroup);
+
+			syslog('debug', "Prepare profiling '$profilegroup/$profilename'");
+
+			next unless ($profileinfo{'type'} & 3 ) == 2;
+			next if $profileinfo{'status'} ne 'OK';
+
+			foreach my $channel ( keys %{$profileinfo{'channel'}} ) {
+				push @ProfileOptList, "$profilegroup#$profilename#$profileinfo{'type'}#$channel#$profileinfo{'channel'}{$channel}{'sourcelist'}";
+			}
+		}
+	}
+
+	foreach my $alertname ( NfAlert::AlertList() ) {
+		my %alertinfo = NfAlert::ReadAlert($alertname);
+		if ( $alertinfo{'status'} eq 'enabled' ) {
+			push @ProfileOptList, ".#~$alertname#8#$alertname#$alertinfo{'channellist'}";
+		} else {
+			syslog('debug', "Skip alert '$alertname' status: $alertinfo{'status'}");
+		}
+	}
+        
+	# Do profiling
+	%profileinfo  = NfProfile::ReadProfile('live', '.');
+	if ( $profileinfo{'status'} eq 'empty' ) {
+		syslog('err', "Can't read profile 'live'");
+		if ( defined $Log::ERROR ) {
+			syslog('err', "$Log::ERROR");
+		}
+	}
+
+	syslog('info', scalar @ProfileOptList . " channels/alerts to profile");
+	if ( scalar @ProfileOptList > 0 ) {
+		# Build optional arguments for nfprofile in stdin
+		my $channellist  = join ':', keys %{$profileinfo{'channel'}};
+		my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
+		my $arg = "-I -t $timeslot -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout $NfConf::NFPROFILEOPTS ";
+		$arg   .= "-z " if $NfConf::ZIPprofiles;
+		my $flist = "-L $NfConf::syslog_facility -M $NfConf::PROFILEDATADIR/live/$channellist -r nfcapd.$t_iso";
+
+		my @profilers;
+		# syslog('debug', "nfprofile run: $NfConf::PREFIX/nfprofile $arg $flist");
+		my $num_profilers = $NfConf::PROFILERS;
+		if ( $num_profilers > ( scalar @ProfileOptList ) ) {
+			$num_profilers = scalar @ProfileOptList;
+			syslog('debug', "Limit profilers: $num_profilers");
+		}
+		for (my $i = 0; $i < $num_profilers; $i++) {
+			if ( open my $NFPROFILE, "|-") {
+				autoflush $NFPROFILE 1;
+				local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfprofile ".$i); };
+				push(@profilers,$NFPROFILE);
+			} else {
+				if (!open(NFPROFILE,"| $NfConf::PREFIX/nfprofile $arg $flist 2>&1" )) {
+					syslog('err', "nfprofile failed: $!\n");
+					syslog('debug', "System was: $NfConf::PREFIX/nfprofile $arg $flist");
+					exit(-1);
+				} 	
+				my $in;
+				while ($in = <STDIN>) {
+					chomp $in;
+					last if $in eq ".";
+					print NFPROFILE "$in\n";	
+					syslog('debug', "profile opts: $in for profiler $i");
+				}
+				syslog('debug', "profiler $i started");
+				close NFPROFILE;
+				syslog('debug', "profiler $i finished");
+				exit(0);
+			}
+		}
+		my $i=0;
+		foreach my $profileopts ( @ProfileOptList ) {
+			$i=0 if ++$i>=$num_profilers;
+			print {$profilers[$i]} "$profileopts\n";
+		}
+
+		for (my $i = 0; $i < $num_profilers; $i++) { 
+		# a dot denotes that the last profileopts has been send and the profiler can start profiling.
+			print {$profilers[$i]} ".\n";
+		}
+
+		# close the streams, the close operation also waits for the child process to be finished
+		for (my $i = 0; $i < $num_profilers; $i++) {
+			close $profilers[$i];	# SIGCHLD sets $child_exit
+		}
+
+	} else {
+		syslog('debug', "No continous profiles - nothing to profile");
+	}
+
+	# continue with updating RRDs 
+	my @args;
+	# Loop over all available profiles
+	foreach my $profilegroup ( @AllProfileGroups ) {
+		my @AllProfiles = NfProfile::ProfileList($profilegroup);
+		if ( scalar @AllProfiles == 0 ) {
+			syslog('err', $Log::ERROR) if defined $Log::ERROR;
+			return;
+		}
+
+		foreach my $profilename ( @AllProfiles ) {
+			# not a valid profile -> continue
+			next unless NfProfile::ProfileExists($profilename, $profilegroup);
+
+			my %profileinfo = NfProfile::LockProfile($profilename, $profilegroup);
+			# Make sure profile is not empty - means it exists and is not locked
+			if ( $profileinfo{'status'} eq 'empty' ) {
+				# profile already locked and in use
+				next if $profileinfo{'locked'} == 1;
+		
+				# it's an error reading this profile
+				if ( defined $Log::ERROR ) {
+					syslog('err', "Error $profilename: $Log::ERROR");
+					next;
+				}
+			}
+
+			my $is_shadow = ( $profileinfo{'type'} & 4 ) > 0 ? 1 : 0;
+			# history[/shadow] profiles or new profiles need no updates
+			if ( ( $profileinfo{'type'} & 3 )  == 1 || $profileinfo{'status'} eq 'new' ) {
+				$profileinfo{'locked'} = 0;
+				if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+					syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+				}
+				next;
+			}
+		
+			# remember if the profile may grow
+			# growing == 0 or continous[/shadow]
+			my $growing = $profileinfo{'type'} == 0 || ( $profileinfo{'type'} & 3 ) == 2;
+	
+			syslog('info', "Update profile $profilename in group $profilegroup");
+
+			my %statinfo	= ();
+	
+			# we have found some files at this timestamp => update
+			$profileinfo{'updated'} = $timeslot;
+
+			if ( $profilegroup eq '.' && $profilename eq 'live' ) {
+				# update live RRD database - other profiles were already updated by nfpofile
+				foreach my $channel ( NfProfile::ProfileChannels(\%profileinfo) ) {
+
+					my ($statinfo, $exit_code, $err ) = NfProfile::ReadStatInfo(\%profileinfo, $channel, $subdirs, $t_iso, undef);
+					if ( $exit_code != 0 ) {
+						syslog('err', $err);
+						next;
+					}
+
+					my @_values = ();
+					foreach my $ds ( @NfSenRRD::RRD_DS ) {
+                   		if ( !defined $$statinfo{$ds} || $$statinfo{$ds} == - 1 ) {
+                       		push @_values, 0;
+                   		} else {
+                       		push @_values, $$statinfo{$ds};
+                   		}
+					}
+					$err = NfSenRRD::UpdateDB("$NfConf::PROFILESTATDIR/$profilegroup/$profilename", $channel, $timeslot,
+						join(':',@NfSenRRD::RRD_DS) , join(':', @_values));
+					if ( $Log::ERROR ) {
+						syslog('err', "ERROR Update RRD time: '$t_iso', db: '$channel', profile: '$profilename' group '$profilegroup' : $Log::ERROR");
+					}
+				}
+			}
+
+			# give the plugins some CPU cycles
+			if ( $profileinfo{'status'} eq 'OK' && defined $comm_pid &&
+				( !$is_shadow ) ) {
+				syslog('debug', "Add $profilegroup:$profilename:$t_iso for plugin processing");
+				push @args, "$profilegroup:$profilename:$t_iso";
+			}
+	
+			# update the end of the profile for 'live' and 'continuous' profiles but not
+			# for 'history' profiles
+			$profileinfo{'tend'} = $profileinfo{'updated'} if $growing;
+
+			# keep profile locked, if an error occured
+			$profileinfo{'locked'} = 0;
+
+			# Update the graphs if it's a growing profile
+			if ( $profileinfo{'status'} eq 'OK' && $growing ) {
+				NfSenRRD::UpdateGraphs($profilename, $profilegroup, $profileinfo{'updated'}, 0);
+				if ( defined $Log::ERROR ) {
+					syslog('err', "Error graph update: $Log::ERROR");
+				}
+			}
+
+			if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+				syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+			}
+		}
+	}
+
+	# profiling done - now fork an expire process
+	my $NFEXPIRE;
+	if ( open $NFEXPIRE, "|-") {
+		autoflush $NFEXPIRE 1;
+		local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfexpire sub-process "); };
+		syslog('debug', "Expire forked");
+	} else {
+		syslog('debug', "expire child");
+		ExpireProfiles($save_slot);
+		syslog('debug', "expire child done");
+		close $NFEXPIRE;
+		exit(0);
+	}
+
+	syslog('debug', "Run plugins for $t_iso");
+	if ( $comm_pid && scalar @args > 0 ) {
+		my %out_list;
+		my $nfsend_socket;
+		my $timeout = $NfConf::CYCLETIME;
+		if ( $nfsend_socket = Nfcomm::nfsend_connect($timeout) ) {
+			my $status = Nfcomm::nfsend_comm($nfsend_socket, 
+				'run-plugins', { 'plugins' => \@args }, \%out_list, { 'timeout' => $timeout } );
+			if ( $status =~ /^ERR/ ) {
+				syslog('err', "nfsend: $status");
+			}
+		} else {
+			syslog('err', "Can not connect to nfsend");
+		}
+		Nfcomm::nfsend_disconnect($nfsend_socket);
+	}
+	syslog('debug', "Run plugins done.");
+
+	syslog('debug', "Check alerts for " . scalar localtime($timeslot));
+	NfAlert::RunPeriodic($t_iso);
+	syslog('debug', "Check alerts done.");
+
+	syslog('debug', "wait for expire child");
+	close $NFEXPIRE;
+	syslog('debug', "Expire child terminated");
+
+} # end of Periodic 
+
+sub ExpireProfiles {
+	my $timeslot = shift;
+
+	my $nextslot = $timeslot + $NfConf::CYCLETIME;
+
+	syslog('info', "Run expire at " . scalar localtime($timeslot));
+
+	my $live_start = 0;
+	# Loop over all available pofiles
+	foreach my $profilegroup ( NfProfile::ProfileGroups() ) {
+		my @AllProfiles = NfProfile::ProfileList($profilegroup);
+		if ( scalar @AllProfiles == 0 ) {
+			syslog('err', $Log::ERROR) if defined $Log::ERROR;
+			return;
+		}
+
+
+		foreach my $profilename ( @AllProfiles ) {
+			# not a valid profile -> continue
+			next unless NfProfile::ProfileExists($profilename, $profilegroup);
+
+			# In simulator mode do not expire profile live, as it would destroy pre-collected data
+			if ( $NfConf::SIMmode == 1 && ($profilegroup eq '.' && $profilename eq 'live' ) ) {
+				next;
+			}
+
+			# stat info for expiring
+			my $stat_filenum   = 0;	# number of files expired
+			my $stat_filesize  = 0;	# total disksize expired
+			my $stat_timerange = 0;	# time range expired
+
+			my %profileinfo = NfProfile::LockProfile($profilename, $profilegroup);
+			# Make sure profile is not empty - means it exists and is not locked
+			if ( $profileinfo{'status'} eq 'empty' ) {
+				# profile already locked and in use
+				next if $profileinfo{'locked'} == 1;
+		
+				# it's an error reading this profile
+				if ( defined $Log::ERROR ) {
+					syslog('err', "Error $profilename: $Log::ERROR");
+					next;
+				}
+			}
+	
+			# Nothing to do for history and shadow profiles
+			if ( ( $profileinfo{'type'} & 3 ) == 1 ) {
+				$profileinfo{'locked'} = 0;
+				if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+					syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+				}
+				next;
+			}
+
+			# continous/shadow profile
+			if ( $profileinfo{'type'} == 6 ) {
+				if ( $profileinfo{'tstart'} < $live_start ) {
+					$profileinfo{'tstart'} =  $live_start;
+				}
+				$profileinfo{'locked'} = 0;
+				if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+					syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+				}
+				next;
+			}
+
+			if ( $profileinfo{'status'} eq 'new' ) {
+        		# profile not yet ready
+        		$profileinfo{'locked'} = 0;
+				if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+					syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+				}
+        		next;
+        	}
+
+			my $now = time();
+			my $left = 30;
+			if ( $now > $nextslot ) {
+				syslog('err', "Expire has no time left in this slot! - Try to run anyway");
+				# min run tim for expire;
+				$left = 5;
+			} elsif ( ($nextslot-$now) < 30 ) {
+				$left = $nextslot-$now;
+				syslog('warning', "Expire only has ${left}s in this slot! - Try to run anyway");
+				# min run tim for expire;
+				$left = 10;
+			} else {
+				$left = int(80 * ($nextslot-$now) / 100);	# 80%
+				syslog('info', "Expire has ${left}s in this slot!");
+			}
+			syslog('info', "Expire profile $profilename group $profilegroup low water mark: $NfConf::low_water% ");
+		
+			# run nfexpire unconditionally, regardless if any size limit is set. this will automatically update
+			# the profile information
+
+			my $tstart			= $profileinfo{'tstart'};
+			my $tend			= $profileinfo{'tend'};
+			my $profilesize 	= $profileinfo{'size'};
+	
+			my $args = "-Y -p -e $NfConf::PROFILEDATADIR/$profilegroup/$profilename -w $NfConf::low_water $NfConf::NFEXPIREOPTS ";
+			$args .= "-s $profileinfo{'maxsize'} " if $profileinfo{'maxsize'};
+			# prepare arg for nfexpire - experimental! not yet enabled
+			$args .= "-T $left " if $NfConf::InterruptExpire;
+			my $_t = $profileinfo{'expire'}; 
+			$args .= "-t $_t "  if $profileinfo{'expire'};
+	
+			# syslog('debug', "Run: $NfConf::PREFIX/nfexpire $args");
+			if ( open NFEXPIRE, "$NfConf::PREFIX/nfexpire $args 2>&1 |" ) {
+				local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfexpire"); };
+				while ( <NFEXPIRE> ) {
+					chomp;
+					# Option -Y returns an extra status line: 'Stat|<profilesize>|<time>'
+					if ( /^Stat\|(\d+)\|(\d+)\|(\d+)/ ) {
+						$profilesize = $1;
+						$tstart		 = $2;
+						$tend		 = $3;
+					} else {
+						s/%/%%/;
+						syslog('debug', "nfexpire: $_");
+					}
+				}
+				close NFEXPIRE;	# SIGCHLD sets $child_exit
+			} 
+	
+			if ( $child_exit != 0 ) {
+				syslog('err', "nfexpire failed: $!\n");
+				syslog('debug', "System was: $NfConf::PREFIX/nfexpire $args");
+        		$profileinfo{'locked'} = 0;
+				if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+					syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+				}
+				next;
+			} 
+	
+			$profileinfo{'size'}	= $profilesize;
+			if ( $tstart == 0 ) {
+				# there is a bug somewhere
+				syslog('err', "*** ERROR *** Attempt to set tstart = 0 in '$profilename'");
+			} else {
+				$profileinfo{'tstart'} 	= $tstart;
+			}
+	
+			if ( $profilegroup eq '.' && $profilename eq 'live' ) {
+				$live_start = $profileinfo{'tstart'};
+			}
+			$profileinfo{'locked'} = 0;
+			if ( !NfProfile::WriteProfile(\%profileinfo) ) {
+				syslog('err', "Error writing profile '$profilename': $Log::ERROR");
+			}
+	
+		}
+	}
+	syslog('info', "End expire at " . scalar localtime($timeslot));
+
+} # End of ExpireProfiles
+
+sub LoopLive {
+	do {
+		my $nfsend_socket;
+		
+		my $cycle_start = time();
+		$lastcycle = $cycle_start - ( $cycle_start % $NfConf::CYCLETIME );
+	
+		Nfsync::semwait();
+		SignalPeriodic(1);
+		Periodic($lastcycle);
+		SignalPeriodic(0);
+		Nfsync::semsignal();
+		
+		#
+		# determin, if we need some sleep. If we are done in this cycle
+		# sleep until next timeslot + 15s = 315s
+		# otherwise we are behind time schedule. continue updating the 
+		# profiles until we are on track and can sleep
+		my $cycle_end = time();
+		if ( ($cycle_end - $lastcycle) < ($NfConf::CYCLETIME + 15) ) {
+			my $sleeptime = $lastcycle + ($NfConf::CYCLETIME + 15) - $cycle_end;
+			sleep $sleeptime if $forever;
+		} else {
+			syslog('warning',"Behind schedule");
+		}
+	
+	} while ( $forever );
+
+} # End of LoopLive
+
+sub LoopSim {
+	my $hints = shift;
+
+	my $tbegin 	  = exists $NfConf::sim{'tbegin'} ? $NfConf::sim{'tbegin'} : $NfConf::sim{'tstart'};
+	$lastcycle = exists $$$hints{'sim'}{'tbreak'} ? $$$hints{'sim'}{'tbreak'} : NfSen::ISO2UNIX($tbegin) - $NfConf::CYCLETIME;
+	my $tend   	  = NfSen::ISO2UNIX($NfConf::sim{'tend'});
+	syslog('info',"Simulation starts at %s", scalar localtime $lastcycle );
+	do {
+		my $nfsend_socket;
+			
+		my $cycle_start = time();
+		$lastcycle += $NfConf::CYCLETIME;
+	
+		Nfsync::semwait();
+		Periodic($lastcycle);
+		ExpireProfiles($lastcycle);
+		Nfsync::semsignal();
+		
+		#
+		# determin, if we need some sleep. If we are done in this cycle
+		# sleep until next simulated timeslot
+		# otherwise we are behind time schedule. continue updating the 
+		# profiles until we are on track and can sleep
+		# continues cycling id done, when cycletime == 0
+		my $cycle_end = time();
+		if ( ($cycle_end - $cycle_start) < $NfConf::sim{'cycletime'} ) {
+			my $sleeptime = $cycle_start + $NfConf::sim{'cycletime'} - $cycle_end;
+			sleep $sleeptime if $forever;
+		} else {
+			if ( $$$hints{'sim'}{'cycletime'} ) {
+				syslog('warning',"Behind schedule");
+			}
+		}
+		$forever = 0 if $lastcycle >= $tend;
+	} while ( $forever );
+	syslog('info',"Simulation ends at %s", scalar localtime $lastcycle);
+	$$$hints{'sim'}{'tbreak'} = $lastcycle;
+	if ( $lastcycle >= $tend ) {
+		# wait until we are told to exit
+		$$$hints{'sim'}{'tbreak'} = $tend;
+		select(undef, undef, undef, undef);
+	}
+
+} # End of LoopSim
+
+
+######################
+#
+# Main starts here
+#
+######################
+	
+
+if ( !NfConf::LoadConfig() ) {
+	die "$Log::ERROR\n";
+}
+
+$NfConf::RRDoffset = NfSenRRD::GetRRDoffset();
+if ( !defined $NfConf::RRDoffset ) {
+	die "$Log::ERROR\n";
+}
+
+my $hints = NfSen::LoadHints();
+
+if ( Nfsources::CheckReconfig() == 0 ) {
+	exit;
+}
+
+Log::LogInit();
+syslog("info", "Startup. Version: $nfsen_version $VERSION");
+
+my $arg = shift @ARGV;
+$arg = '' unless defined $arg;
+die "Unknow argument '$arg'" if $arg ne '' && $arg ne 'once';
+
+if ( !NfSen::DropPriv($NfConf::USER) ) {
+	die "$Log::ERROR\n";
+}
+
+Nfsync::seminit();
+
+
+if ( $NfConf::SIMmode ) {
+	$NfConf::Refresh = $NfConf::sim{'cycletime'} > 2 ? $NfConf::sim{'cycletime'} : 2;
+} 
+
+$forever = ($arg eq 'once') ? 0 : 1;
+# When starting up, check if all the profiles are up to date till the last timeslot
+# then periodically update the profiles
+if ( $forever ) {
+	if ( -f "$NfConf::PIDDIR/$pidfile" ) {
+		# there is a pid file .. check for the process
+		open PID, "$NfConf::PIDDIR/$pidfile" || 
+			die "Can't read pid file '$NfConf::PIDDIR/$pidfile': $!\n";
+		my $pid = <PID>;
+		chomp $pid;
+		close PID;
+		if ( kill( 0, $pid) == 0  ) {
+			print "Unclean shutdown of nfsend[$pid]\n";
+			unlink "$NfConf::PIDDIR/$pidfile";
+		} else {
+			print "nfsend[$pid] already running\n";
+			exit;
+		}
+	}
+	# still as a single process check for proper status of profile 'live'
+	CheckLockLive();
+	# other clean-up
+	NfProfile::CheckProfiles();
+	NfAlert::CleanAlerts();
+	
+	# Check if configured sub hierarchy matches
+	CheckSubHierarchy($hints);
+
+	daemonize("$NfConf::PIDDIR/$pidfile");
+
+    if (!defined($comm_pid = fork)) {
+        print STDERR "cannot fork: $!";
+        die "Died";
+    } elsif ($comm_pid) {
+		# I'm the parent process
+        syslog('info', "nfsend: [$$]");
+		# make sure the child gets the semaphore
+		sleep(1);
+    } else {
+		# I'm the child process
+		# block the parent for Init phase
+		Nfsync::semwait();
+		setsid or die "Comm server: Can't start a new session: $!";
+		$unit = "Comm server";
+		$0 =~ s/nfsend/nfsend-comm/;
+
+		# Start socket server
+		my $server = Nfcomm::Setup_Server($nfsen_version);
+		if ( !defined $server ) {
+			syslog("err", "Can't start comm server: $Log::ERROR");
+			die "Died";
+		}
+
+		syslog("info", "Comm server started: [$$]");
+		Nfcomm::LoadPlugins();
+		Nfsync::semsignal();
+		Nfcomm::RunServer($server);
+		Nfcomm::CleanupPlugins();
+		Nfcomm::Close_server($server);
+		syslog("info", "Comm server terminated: [$$].");
+		exit(0);
+	}
+	
+} else {
+	syslog("info", "Run '$arg'");
+}
+
+SetSignalHandlers();
+$SIG{CHLD} = \&SIG_CHILD;
+
+tie(*STDERR, 'Log', 'nfsen');
+
+# Loop until we are told to quit
+if ( $NfConf::SIMmode ) {
+	LoopSim($hints);
+	# write back hints
+	NfSen::StoreHints();
+} else {
+	delete $$$hints{'sim'};
+	NfSen::StoreHints();
+	LoopLive($hints);
+}
+
+
+# Shut down everything
+my $kid;
+if ( $comm_pid && kill( 0, $comm_pid) ) {
+	syslog('debug',"Signal comm server to terminate");
+	kill 'TERM', $comm_pid || syslog('err', "Can't signal comm server: $!");
+	# wait for comm server to terminate
+	do {
+		select(undef, undef, undef, 0.25);
+		$kid = kill( 0, $comm_pid);
+	} while $kid == 1;
+}
+
+# clean-up
+NfProfile::CheckProfiles();
+NfAlert::CleanAlerts();
+
+# cleanup
+Nfsync::semclean();
+
+# As daemon remove the pid file, when done
+if ( $arg ne 'once' && -f "$NfConf::PIDDIR/$pidfile" ) {
+    unlink "$NfConf::PIDDIR/$pidfile";
+}
+
+if ( $reload ) {
+	if ( $0 =~ /^\// ) {
+		syslog("info", "Restart $0");
+		exec $0 or
+			syslog("err", "Can't restart self: '$0': $!");
+	}
+	syslog("info", "Restart $NfConf::BINDIR/nfsend");
+	exec "$NfConf::BINDIR/nfsend" or
+		syslog("err", "Can't restart self: '$NfConf::BINDIR/nfsend': $!");
+} else {
+	syslog("info", "Exit");
+}
+
+untie *STDERR;
+Log::LogEnd;
+
+exit 0;

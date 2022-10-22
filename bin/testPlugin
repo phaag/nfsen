@@ -1,0 +1,185 @@
+#!%%PERL%% -w
+#
+#  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
+#  All rights reserved.
+#  
+#  Redistribution and use in source and binary forms, with or without 
+#  modification, are permitted provided that the following conditions are met:
+#  
+#   * Redistributions of source code must retain the above copyright notice, 
+#     this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright notice, 
+#     this list of conditions and the following disclaimer in the documentation 
+#     and/or other materials provided with the distribution.
+#   * Neither the name of SWITCH nor the names of its contributors may be 
+#     used to endorse or promote products derived from this software without 
+#     specific prior written permission.
+#  
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+#  POSSIBILITY OF SUCH DAMAGE.
+#  
+#  $Author: peter $
+#
+#  $Id: testPlugin 27 2011-12-29 12:53:29Z peter $
+#
+#  $LastChangedRevision: 27 $
+
+use strict;
+use Getopt::Std;
+use Sys::Syslog;
+
+######################################
+#
+# Configuration: 
+# The only parameter to set:
+
+use lib "%%LIBEXECDIR%%";
+
+#
+######################################
+
+use NfConf;
+use NfSen;
+use NfProfile;
+use Log;
+
+my $VERSION = '$Id: testPlugin 27 2011-12-29 12:53:29Z peter $';
+
+our (	
+	$opt_h, 	# Help Info
+	$opt_p, 	# plugin to test
+	$opt_P, 	# Profile to use for test
+	$opt_V, 	# Version of testPlugin
+	$opt_t,	 	# Timestamp to use for test
+);
+
+getopts('p:P:Vht:');
+
+my %plugin_table ;
+
+sub usage {
+
+	print "$0 [options]\n",
+		"\t-h This help\n",
+		"\n",
+		"\t-p <PluginName>   Plugin to test\n",
+		"\t-P <ProfileName>  Profile to use for testing\n",
+		"\t-t <yyyymmddHHMM> Timestamp to use for test\n",
+		"\te.g: -p myCoolPlugin -P myCoolProfile -t 200503310000\n",
+		"\n",
+
+} # End of usage
+
+sub load_module {
+	my $module = shift;
+			
+	eval {
+    	require "$module.pm";
+	};
+
+    if ( my $err = $@ ) {
+        print "Err Loading plugin '$module' failed: $err\n" ;
+        return 0;
+    }
+    print "Load plugin '$module' \t: Success\n" ;
+
+	print "Initialize plugin \t: " ;
+    my $ret = $module->Init();
+    if ( $ret ) {
+        print "Success\n" ;
+        return 1;
+    } else {
+        print "Suspended: Plugin does not want to run\n" ;
+        return 0;
+	}
+
+} # End of load_module
+
+###################
+# Main starts here
+###################
+
+if ( defined $opt_V ) {
+	print "$0: $VERSION\n";
+	exit;
+}
+
+if ( defined $opt_h || !defined $opt_p || !defined $opt_P || !defined $opt_t ) {
+    usage();
+    exit;
+}
+
+my %opts;
+$opts{'profile'} = $opt_P;
+
+my $plugin 		 = $opt_p;
+
+my ($profile, $profilegroup);
+my $ret = NfProfile::ProfileDecode(\%opts, \$profile, \$profilegroup);
+
+if ( $ret ne 'ok' ) {
+	die "Can't decode profile: $ret";
+} 
+
+if ( !NfConf::LoadConfig() ) {
+	die "$Log::ERROR\n";
+}
+
+# That's were we find all the plugins
+unshift @INC, "$NfConf::BACKEND_PLUGINDIR";
+
+openlog("testPlugin", 'cons,pid', $NfConf::syslog_facility);
+
+if ( !NfProfile::ProfileExists($profile, '.') ) {
+	print "Err No such profile '$profile'\n";
+	exit;
+}
+
+my %profileinfo = NfProfile::ReadProfile($profile, '.') ;
+
+if ( $profileinfo{'status'} eq 'empty' ) {
+	print "Err Can't read profile '$profile': $Log::ERROR\n"; 
+	exit;
+} 
+
+my $timeslot = $opt_t;
+if ( !NfSen::ValidISO($timeslot) ) {
+	print "Err Invalid timeslot '$timeslot'\n";
+	exit;
+}
+
+my $unixtime = NfSen::ISO2UNIX($timeslot);
+
+if ( $unixtime < $profileinfo{'tstart'} || $unixtime > $profileinfo{'tend'} ) {
+	my $iso_start = NfSen::UNIX2ISO($profileinfo{'tstart'});
+	my $iso_end   = NfSen::UNIX2ISO($profileinfo{'tend'});
+	print "Err Timeslot out of range. Must be between '$iso_start' and '$iso_end'\n";
+	exit;
+}
+
+if ( !load_module($plugin) ) {
+	exit;
+}
+
+print "Run plugin '$plugin' with profile '$profile' at '$timeslot'\n";
+my $sub = "${plugin}::run";
+no strict 'refs';
+&$sub( {
+	'profile'		=> $profile, 
+	'profilegroup'	=> $profilegroup, 
+	'timeslot'		=> $timeslot
+});
+use strict 'refs';
+$plugin->Cleanup();
+print "Plugin run successfully, at least as far as I can tell ...\n" ;
+
+closelog();

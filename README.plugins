@@ -1,0 +1,49 @@
+NfSen Plugins
+=============
+
+A detailed plugin guide is available in the doc directory. However,
+to upgrade your current plugins, follow the procedure below:
+
+Plugins of Nfsen version < snapshot-20070110 will be recognized as so called
+legacy plugins, and will work with only little modifications:
+
+Frontend Plugins:
+Replace all notification Messages in your plugin:
+   
+	Instead of directly setting the message with
+
+	$_SESSION['error'] = '.. '; 
+
+	use the new provided function
+
+	SetMessage('error', "...");
+
+	The same is true for 'warning', 'alert' and 'info'
+
+Backend Plugins:
+Your plugins will continue to work unless you make access to profile
+information such as NfSen::ReadProfile.
+All Profile functions have been moved from NfSen module to NfProfile. So you
+need to replace calls such es NfSen::ReadProfile(..) to NfProfile::ReadProfile
+
+When accessing profile data, a legacy plugin runs correctly only, when the profile
+is not in a subgroup. To access the profilegroup, add another parameter to your run
+function:
+
+sub run {
+	my $name = shift;
+	my $timeslot = shift;
+
+	# add here group parameter
+	my $profilegroup = shift;
+
+You may also add the $profilegroup parameter to the ReadProfile(..) function in order 
+to access plugin information in a subgroup
+
+** IMPORTANT **
+Replace the default sub END in the plugin by sub Cleanup. This is required as otherwise
+Perl will call the standard END block, every time a comm service server exits. This
+could cause unexpected results. 
+
+If you are interessted in more details, have a look at the demoplugin.pm in the plugin
+directory and look into the Plugin Writers guide in the doc dir.

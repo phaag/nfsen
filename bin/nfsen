@@ -1,0 +1,885 @@
+#!%%PERL%% -w
+#
+#  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#
+#   * Redistributions of source code must retain the above copyright notice,
+#     this list of conditions and the following disclaimer.
+#   * Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions and the following disclaimer in the documentation
+#     and/or other materials provided with the distribution.
+#   * Neither the name of SWITCH nor the names of its contributors may be
+#     used to endorse or promote products derived from this software without
+#     specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+#  $Author: peter $
+#
+#  $Id: nfsen 71 2017-01-19 16:16:21Z peter $
+#
+#  $LastChangedRevision: 71 $
+
+use strict;
+use warnings;
+use POSIX 'setsid';
+use Getopt::Long;
+use Sys::Syslog; 
+use Socket;
+
+use POSIX ":sys_wait_h";
+
+######################################
+#
+# Configuration: 
+# The only parameter to set:
+
+use lib "%%LIBEXECDIR%%";
+
+#
+######################################
+
+use NfConf;
+use NfSen;
+use NfProfile;
+use Nfsources;
+use NfSenRC;
+use Nfcomm;
+use Log;
+
+my $VERSION = '$Id: nfsen 71 2017-01-19 16:16:21Z peter $';
+my $nfsen_version = "1.3.8";
+
+our $child_exit = 0;
+my $unit = 'nfsen';
+
+sub usage {
+	print "$0 command [parameters]
+
+	Use --help for long help
+\n";
+} # End of usage
+
+sub LongHelp {
+
+	print "$0 command [parameters]
+
+  --help|-h 
+    This help
+
+  --version|-V
+    Version of nfsen
+
+  --get-profilelist|-A
+    List all profiles.
+
+  --get-profile|-l <profile>
+    List profile with <profile> == [profilegroup/]profilename
+
+  --add-profile|-a <profile>
+    Add new profile with <profile> == [profilegroup/]profilename
+
+    optional parameters:
+	  description=<one line description>
+      A one line description for the profile. Default '' no comment.
+
+      tstart=<start-time> 
+      Start time of profile. Format yyyy-mm-dd-HH-MM, or yyyymmddHHMM
+      Specify time for history profile, leave it empty to start from now.
+      Default: start from now.
+
+      tend=<start-time> 
+      End time of profile. Format yyyy-mm-dd-HH-MM, or yyyymmddHHMM
+      Specify time for history profile, leave it empty for a continuous profile.
+      Default: empty for continuous profile.
+
+      expire=<expiresize>
+      Set max life time for profile data. Format: <num> [d|day|days|h|hour|hours]
+      Set to 0 for unlimited life time. Defaults to '0 hours'
+
+      maxsize=<max size>
+      Set max disk size of profile data. Format: <num> [k|kb|m|mb|g|gb|t|tb]
+      Set to 0 for unlimited grow of disk space for profile. Defaults to '0 mb'
+
+      shadow=<0|1>
+      Create data collecting or shadow profile. A shadow profile does record any data.
+      Defaults to 0.
+
+   The new profile has no channels assigned yet and stays in status 'new'. Assign
+   new channels with --add-channel. When all channels added, commit the profile
+   with --commit-profile
+
+  --commit-profile|-c <profile>
+    Commit  a new profile with <profile> == [profilegroup/]profilename
+    A new created profile with all initial channels added is commited. 
+    A history profile is built. A continuous profile starts profiling.
+    Only profiles in status 'new' can be commited.
+
+  --delete-profile|-d <profile>
+    Delete profile with <profile> == [profilegroup/]profilename
+    All including channels and netflow data will be deleted.
+
+  --modify-profile|-m <profile>
+    Modify profile with <profile> == [profilegroup/]profilename
+
+    optional parameters:
+	  description=<one line description>
+      A one line description for the profile.
+
+      expire=<expiresize>
+      Set max life time for profile data. Format: <num> [d|day|days|h|hour|hours]
+      Set to 0 for unlimited life time. Defaults to '0 hours'
+
+      size=<max size>
+      Set max disk size of profile data. Format: <num> [k|kb|m|mb|g|gb|t|tb]
+      Set to 0 for unlimited grow of disk space for profile. Defaults to '0 mb'
+
+      lock=<0|1>
+      Lock or unlock the profile. USE WITH CARE. There are generally good
+      reasons, why a profile is locked.
+
+    --rebuild-profile|-r <profile> [all]
+    Rebuilds profile with <profile> == [profilegroup/]profilename
+    Scans all channels in the given profile and recalculates the size. 
+	If the optional parameter 'all' is given, the RRDs are rebuilded according
+    to the available data, and therefore all graphs are rebuilded. Use with care.
+
+    --expire-profile|-X <profile>
+    Immediately expires the given profile with <profile> == [profilegroup/]profilename
+
+    --add-channel <channelname>
+    Add new channel with <channelname> == [[profilegroup/]profile/]channel
+    profilegroup and profile can also be specified using the optional parameters
+    below.
+
+    parameters:
+      profile=<profilename>
+      Alternatively specify the profile with <profilename> == [profilegroup/]profilename
+
+      profilegroup=<profilegroup>
+      Alternatively specfy the profile group with <profilegroup> == profilename
+
+    Any valid combination is possible to specify a channel, however the name must
+    be non-ambiguous.
+
+    optional parameters:
+      sourcelist=<list>
+      Specify the netflow input sources for this channel. At least one channel from
+      profile 'life' must be specified. 
+      <list> is a '|' separated list of channels of profile 'life'.
+      Default: All channels from profile 'life' are selected.
+
+      filter=<channel filter>
+      Set the specified filter for this channel. Needs to be a valid nfdump filter.
+
+      colour|color=<#num>
+      Set the colour for this channel to be displyed. Format: #rrggbb
+
+      sign=+|-
+      Sets the +/- y-axis for this channel. Defaults to '+'
+
+      order=<num>
+      Sets the order of the display stack in the graphs. order=1 is drawn first. Bigger
+      values follow next. Defaults to last channel in the stack.
+
+      newgroup=<newgroup>
+      Move profile into new group <newgroup>
+
+    --delete-channel <channelname>
+    Delete a given channel from a profile. All netflow und graphic data are deleted.
+    Format for <channelname> see --add-channel.
+
+    --modify-channel <channelname>
+    Modifies a given channel in a profile. Format for <channelname> see --add-channel.
+    All optional parameters specified in --add-channel can be changed with --modify-profile.
+    See --add-channel.
+
+    Compatibility options:
+    Most nfsen v1.2.x options are accepted at the proper place at the command line. 
+    The following parameters are equivalent:
+
+    -D <description> description=<description>
+    -B <tstart>      tstart=<start time>
+    -E <tend>        tend=<end time>
+    -e <expire>      expire=<expire>
+    -s <max size>    size=<max size>
+    -U               lock=0
+    -L               lock=1
+    -F               force=1
+
+    Root commands:
+    The commands below are only accepted, when running nfsen as root.
+
+	start
+	Start nfsen. Can be linked from init.d, rc.d directories to start/stop nfsen
+
+	Stop
+	Stop nfsen. Can be linked from init.d, rc.d directories to start/stop nfsen
+
+    reconfig
+    Reconfigure nfsen, when adding/deleting netflow sources. First make the
+    appropriate changes in nfsen.conf and then run 'nfsen reconfig'. The nfcapd
+    collectors are started or stopped as needed. In case of a source removal, all
+    netflow data is deleted.
+
+    status
+    Prints the status of all collectors and nfsend.
+
+	In Simulation mode only:
+	abort-reset
+	Stops nfsen and rolls everything back to the installation state.
+
+\n";
+} # End of LongHelp
+
+my %cmd_arg;
+Getopt::Long::Configure ("bundling");
+GetOptions(\%cmd_arg, 
+	'get-profilegroups', 
+	'get-profilelist', 'A',
+	'get-profile=s', 'l=s',
+	'get-frontendplugins',
+	'add-profile=s', 'a=s',
+	'add-channel=s',
+	'commit-profile=s',
+	'delete-profile=s', 'd=s',
+	'delete-channel=s',
+	'modify-profile=s', 'm=s',
+	'modify-channel=s',
+	'rebuild-profile=s', 'r=s',
+	'expire-profile=s', 'X=s',
+
+	# compatibility options
+	'B=s', 'E=s', 'e=s', 's=s', 'F', 'U', 'L',
+
+	# help and version
+	'help','h',
+	'shell', 'S',
+	'version', 'V'
+) or exit;
+
+my %CMD_Decode = (
+	# cmd on cmd line             %CMD_lookup equiv, set param
+	'get-profilegroups'	  =>	[ 'get-profilegroups', undef],
+	'get-frontendplugins' =>	[ 'get-frontendplugins', undef],
+	'get-profilelist'	  =>	[ 'get-profilelist',  undef],
+	'A'					  =>	[ 'get-profilelist',  undef],
+
+	'add-profile'		  =>	[ 'add-profile', 	 'profile'],
+	'a'					  =>	[ 'add-profile', 	 'profile'],
+	'delete-profile'	  =>	[ 'delete-profile',  'profile'],
+	'd'					  =>	[ 'delete-profile',  'profile'],
+	'get-profile'		  =>	[ 'get-profile', 	 'profile'],
+	'l'					  =>	[ 'get-profile', 	 'profile'],
+	'modify-profile'	  =>	[ 'modify-profile',  'profile'],
+	'm'					  =>	[ 'modify-profile',	 'profile'],
+	'rebuild-profile'	  =>	[ 'rebuild-profile', 'profile'],
+	'r'					  =>	[ 'rebuild-profile', 'profile'],
+	'expire-profile'	  =>	[ 'expire-profile',  'profile'],
+	'X'					  =>	[ 'expire-profile',  'profile'],
+	'commit-profile'	  =>	[ 'commit-profile',  'profile'],
+	'c'	  				  =>	[ 'commit-profile',  'profile'],
+
+	'add-channel'		  =>	[ 'add-channel', 	 'channel'],
+	'modify-channel'	  =>	[ 'modify-channel',  'channel'],
+	'delete-channel'	  =>	[ 'delete-channel',  'channel'],
+
+	# convenience opts
+	'D'	=>	[ undef,	'_description'],
+	'B' =>	[ undef, 	'tstart'],
+	'E' =>	[ undef, 	'tend'],
+	'f' =>	[ undef,	'_filter'],
+	'e' =>	[ undef, 	'expire'],
+	's' =>	[ undef, 	'maxsize'],
+	'F' =>	[ undef, 	'force=1'],
+	'U' =>	[ undef, 	'locked=0'],
+	'L' =>	[ undef, 	'locked=1'],
+);
+
+# Command lookup table
+# 	Each function has too accepts $socket, \%opts as parameter
+my %CMD_lookup = ( 
+	#
+	# commands executed by nfsend
+	'get-profilegroups'		=> { 'nfsend' => 1, 'run' => \&GetProfileGroups,   'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'get-profilelist'		=> { 'nfsend' => 1, 'run' => \&GetProfileList, 	   'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'get-frontendplugins'	=> { 'nfsend' => 1, 'run' => \&GetFrontendPlugins, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'get-profile'			=> { 'nfsend' => 1, 'run' => \&GetProfile, 		   'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+
+	'add-profile'	 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'add-channel'	 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'commit-profile' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+
+	'delete-profile' 		=> { 'nfsend' => 1, 'run' => \&DeleteProfile, 	   'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'delete-channel' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+
+	'modify-profile' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+	'modify-channel' 		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0 }, 
+
+	'rebuild-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => 300 , 'info' => 1}, 
+	'expire-profile'		=> { 'nfsend' => 1, 'run' => \&GenericListProfile, 'RunAsRoot'	=>	0, 'rc_command'	=> 0, 'timeout' => 300 }, 
+	#
+	# Directly executed commands
+	'reconfig'		 => { 'nfsend' => 0, 'run'	=>	\&Nfsources::Reconfig,	   'RunAsRoot'	=>	1, 'rc_command'	=> 0 }, 
+	'start'			 => { 'nfsend' => 0, 'run'	=>	\&NfSenRC::NfSen_start,	   'RunAsRoot'	=>	1, 'rc_command'	=> 1 }, 
+	'stop'			 => { 'nfsend' => 0, 'run'	=>	\&NfSenRC::NfSen_stop,	   'RunAsRoot'	=>	1, 'rc_command'	=> 1 }, 
+	'reload'		 => { 'nfsend' => 0, 'run'	=>	\&NfSenRC::NfSen_reload,   'RunAsRoot'	=>	1, 'rc_command'	=> 1 }, 
+	'status'		 => { 'nfsend' => 0, 'run'	=>	\&NfSenRC::NfSen_status,   'RunAsRoot'	=>	1, 'rc_command'	=> 0 }, 
+
+);
+
+sub ParseOptArgs {
+	my $opt_ref = shift;
+
+	foreach my $arg ( @ARGV ) {
+		my ($key, $value) = split /=/, $arg;
+		if ( defined $value ) {
+			$$opt_ref{$key} = $value;
+		} elsif ( $arg =~ /^\w+$/ ) {
+			$$opt_ref{$arg} = 1;
+		} else {
+			print "Unknown option: '$arg'\n";
+			return;
+		}
+	}
+
+} # End of ParseOptArgs
+
+#
+# Command Decoder
+#
+sub DecodeCommand {
+
+	my %opts;
+	my $what = undef;
+
+	if ( scalar keys %cmd_arg == 0 ) {
+		# Decode direct executed commands first
+		my $opt_arg	= shift @ARGV;
+		if ( defined $opt_arg ) {
+			foreach my $cmd ( keys %CMD_lookup ) {
+				next unless $CMD_lookup{$cmd}{'nfsend'} == 0;	# all direct executed commands
+				if ( $opt_arg eq $cmd ) {
+					$what = $opt_arg;
+				}
+			}
+		}
+		if ( !defined $what ) {
+			usage();
+			return;
+		}
+	} else {
+		# Decode the --opt command
+		foreach my $cmd_opt ( keys %cmd_arg ) {
+			# check for a long opt
+			if ( exists $CMD_Decode{$cmd_opt} ) {
+				my $paramref = $CMD_Decode{$cmd_opt};
+				# add paramater 
+				if ( defined $$paramref[1] ) {
+					if ( $$paramref[1] =~ /(.+)=(.+)/ ) {
+						$opts{$1} = $2;
+					} else {
+						$opts{$$paramref[1]} = $cmd_arg{$cmd_opt};
+					}
+				}
+				# remap command
+				if ( defined $$paramref[0] ) {
+					if ( defined $what ) {
+						print "Multiple commands not accpeted!\n";
+						return;
+					}
+					$what = $$paramref[0];
+				}
+			}
+		}
+
+		if ( !defined $what ) {
+			print "Missing Command Command\n";
+			return;
+		}
+		if ( !exists $CMD_lookup{$what} ) {
+			print "Command Lookup failed! Software bug!\n";
+			return;
+		}
+	}
+
+	# First get all cmd line parameters
+	ParseOptArgs(\%opts);
+
+	my $socket = *STDOUT;
+	my $cmd 			= $CMD_lookup{$what}{'run'};
+	my $nfsend_execute 	= $CMD_lookup{$what}{'nfsend'};
+
+	my $log_to_syslog = 0;
+	if ( $CMD_lookup{$what}{'rc_command'} == 1 && ( !POSIX::isatty( \*STDOUT) ) ) {
+		Log::LogInit();
+		tie(*STDERR, 'Log', 'nfsen');
+		$log_to_syslog = 1;
+	}
+
+	if ( $0 =~ /nfsen.rc/ && $CMD_lookup{$what}{'rc_command'} == 0 ) {
+		die "$0: Unknown command!\n";
+	}
+
+	if ( $CMD_lookup{$what}{'RunAsRoot'} == 1 && !NfSen::root_process() ) {
+		die "$0 wants to run this command as root\n";
+	}
+
+	if ( $nfsend_execute ) {
+		my %out_list;
+		my $nfsend_socket = Nfcomm::nfsend_connect($CMD_lookup{$what}{'timeout'});
+		if ( !$nfsend_socket ) {
+			exit(255);
+		}
+		my %comm_opts;
+		$comm_opts{'timeout'} = $CMD_lookup{$what}{'timeout'} if defined $CMD_lookup{$what}{'timeout'};
+		$comm_opts{'info'} =  defined $CMD_lookup{$what}{'info'} ? 1 : 0;
+		my $status = Nfcomm::nfsend_comm($nfsend_socket, $what, \%opts, \%out_list, \%comm_opts);
+		&$cmd($nfsend_socket, $status, \%opts, \%out_list);
+		Nfcomm::nfsend_disconnect($nfsend_socket);
+	} else {
+		my $ret = Nfsources::CheckReconfig();
+		die if $ret == 2;
+		if ( $ret == 0 && $what ne 'reconfig' ) {
+			print "Configured sources do not match existing sources. Run 'nfsen reconfig' first!\n";
+			return;
+		}
+
+		# Execute the command
+		&$cmd($socket, \%opts);
+		# direct commands might have changed hints
+		# XXX should be most likely removed
+		# NfSen::StoreHints();
+	}
+
+	if ( $log_to_syslog ) {
+		untie *STDERR;
+		Log::LogEnd();
+	}
+
+} # End of DecodeCommand
+
+#
+# Data Display routines
+sub GetProfileList {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+	if ( !defined $$out_list{'profiles'} ) {
+		print "No profiles found.\n";
+		return;
+	}
+
+	foreach my $profile ( @{$$out_list{'profiles'}} ) {
+		# remove './' from profiles in current directory
+		$profile =~ s#^\./##;
+		print "$profile\n";
+	}
+
+} # End of GetProfileList
+
+sub GetProfileGroups {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+	if ( !defined $$out_list{'profilegroups'} ) {
+		print "No profile groups found.\n";
+		return;
+	}
+
+	foreach my $group ( @{$$out_list{'profilegroups'}} ) {
+		next if $group eq '.';
+		print "$group\n";
+	}
+
+} # End of GetProfileList
+
+#
+# Data Display routines
+sub GetProfilegroupList {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+	if ( !defined $$out_list{'profilegroups'} ) {
+		print "No profiles groups found.\n";
+		return;
+	}
+
+	foreach my $profilegroup ( @{$$out_list{'profilegroups'}} ) {
+		print "$profilegroup\n";
+	}
+
+} # End of GetProfilegroupList
+
+
+sub GetFrontendPlugins {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+	if ( !defined $$out_list{'frontendplugin'} ) {
+		print "No plugins found.\n";
+		return;
+	}
+
+	foreach my $plugin ( @{$$out_list{'frontendplugin'}} ) {
+		print "$plugin\n";
+	}
+
+} # End of GetFrontendPlugins
+
+sub GetProfile {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+
+	# formated output
+	my $type = $$out_list{'type'};
+
+	if ( exists $$out_list{'description'} ) {
+		foreach my $line ( @{$$out_list{'description'}} ) {
+			print "# $line\n";
+		}
+	}
+
+	print "name\t$$out_list{'name'}\n";
+	print "group\t" . ($$out_list{'group'} eq '.' ? "(nogroup)" : $$out_list{'group'}) ."\n";
+	print "tcreate\t"  . scalar localtime($$out_list{'tcreate'}) . "\n";
+	print "tstart\t"  . scalar localtime($$out_list{'tstart'}) . "\n";
+	print "tend\t"	. scalar localtime($$out_list{'tend'}) . "\n";
+	print "updated\t" . scalar localtime($$out_list{'updated'}) . "\n";
+
+	my ($d, $h);
+	$d = int($$out_list{'expire'} / 24 );
+	$h = $$out_list{'expire'} % 24;
+	my ( $d_str, $h_str );
+	$d_str = $h_str = '';
+	if ( $d ) {
+		$d_str = "$d day";
+		if ( $d == 0 || $d > 1 ) {
+			$d_str .= "s";
+		}
+		$d_str .= " ";
+	}
+	$h_str = "$h hour";
+	if ( $h == 0 || $h > 1 ) {
+		$h_str .= "s";
+	}
+	print "expire\t${d_str}${h_str}\n";
+
+	my $type_string;
+	if ( $type == 0 ) {
+		$type_string = 'live';
+	} else {
+		$type_string = ( $type & 3 ) == 1 ? 'history' : 'continuous';
+		if ( ($type & 4) > 0 ) {
+			$type_string .= ' / shadow';
+		}
+	}
+	print "size\t" .   NfSen::ScaledBytes($$out_list{'size'}) . "\n";
+	print "maxsize\t". NfSen::ScaledBytes($$out_list{'maxsize'}) . "\n";
+	print "type\t$type_string\n";
+	print "locked\t$$out_list{'locked'}\n";
+	print "status\t$$out_list{'status'}\n";
+	print "version\t$$out_list{'version'}\n";
+	
+	my %channellist;
+
+	foreach my $channel ( @{$$out_list{'channel'}} ) {
+		my @_tmp = split /:/, $channel;
+		my $channelname = shift @_tmp;
+		foreach my $prop ( @NfProfile::ChannelProperties ) {
+			my $val = shift @_tmp;
+			$channellist{$channelname}{$prop} = $val;
+		}
+	}
+
+	my @CHAN = sort {
+   		my $num1 = "$channellist{$a}{'sign'}$channellist{$a}{'order'}";
+   		my $num2 = "$channellist{$b}{'sign'}$channellist{$b}{'order'}";
+   		$num2 <=> $num1;
+	} keys %channellist;
+			
+	my @CHANpos;
+	my @CHANneg;
+			
+	foreach my $channel ( @CHAN ) {
+   		if ( $channellist{$channel}{'sign'} eq "-" ) {
+      			push @CHANneg, $channel;
+   		} else {
+      			unshift @CHANpos, $channel;
+   		}
+	}
+
+	foreach my $channel ( @CHANpos ) {
+		my @_properties;
+		push @_properties, "channel $channel";
+		foreach my $prop ( @NfProfile::ChannelProperties ) {
+			if ( !defined $channellist{$channel}{$prop} ) {
+				push @_properties, "$prop: Undef - corrupt profile!";
+			} else {
+				push @_properties, "$prop: $channellist{$channel}{$prop}";
+			}
+		}
+		my %channelinfo;
+		if ( ($type & 4) == 0  ) { # if not shadow profile
+			if ( $$out_list{'status'} eq 'new' ) {
+				$channelinfo{'numfiles'} = 0;
+				$channelinfo{'size'}	 = 0;
+			} else {
+				my $status = Nfcomm::nfsend_comm( $nfsend_socket, "get-channelstat", { 
+					"profile" => "$$out_list{'name'}", 
+					"profilegroup" => "$$out_list{'group'}", 
+					"channel" => "$channel" }, 
+					\%channelinfo);
+				if ( $status =~ /^ERR/ ) {
+					push @_properties, $status;
+					$channelinfo{'numfiles'} = 0;
+					$channelinfo{'size'}	 = 0;
+				}
+			}
+			push @_properties, "Files: $channelinfo{'numfiles'}\tSize: $channelinfo{'size'}";
+		}
+		print join "\t", @_properties, "\n";
+	}
+	
+	foreach my $channel ( @CHANneg ) {
+		my @_properties;
+		push @_properties, "channel $channel";
+		foreach my $prop ( @NfProfile::ChannelProperties ) {
+			push @_properties, "$prop: $channellist{$channel}{$prop}";
+		}
+		my %channelinfo;
+		if ( ($type & 4) == 0  ) { # if not shadow profile
+			if ( $$out_list{'status'} eq 'new' ) {
+				$channelinfo{'numfiles'} = 0;
+				$channelinfo{'size'}	 = 0;
+			} else {
+				my $status = Nfcomm::nfsend_comm( $nfsend_socket, "get-channelstat", { 
+					"profile" => "$$out_list{'name'}",
+					"profilegroup" => "$$out_list{'group'}", 
+					"channel" => "$channel" }, 
+					\%channelinfo);
+				if ( $status =~ /^ERR/ ) {
+					push @_properties, $status;
+					$channelinfo{'numfiles'} = 0;
+					$channelinfo{'size'}	 = 0;
+				}
+			}
+			push @_properties, "Files: $channelinfo{'numfiles'}\tSize: $channelinfo{'size'}";
+		}
+		print join "\t", @_properties, "\n";
+	}
+
+	print "\n";
+
+} # End of GetProfile
+
+sub GenericListProfile {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+
+	my %out_list;
+	my %opts;
+	my ($profile, $profilegroup);
+
+	# in case we have a combind profile/channel specification
+	if ( exists $$cmd_opts{'channel'} ) {
+		my $dummy;
+		NfProfile::ChannelDecode($cmd_opts, \$dummy);
+	}
+	my $ret = NfProfile::ProfileDecode($cmd_opts, \$profile, \$profilegroup);
+
+	if ( exists $$cmd_opts{'newgroup'} ) {
+		$profilegroup = $$cmd_opts{'newgroup'};
+	}
+
+	$status = Nfcomm::nfsend_comm($nfsend_socket, "get-profile", { 
+		"profile" => "$profile",
+		"profilegroup" => $profilegroup }, \%out_list);
+
+	GetProfile($nfsend_socket, $status, $cmd_opts, \%out_list);
+
+} # End of GenericListProfile
+
+sub DeleteProfile {
+	my $nfsend_socket = shift;
+	my $status		  = shift;
+	my $cmd_opts 	  = shift;
+	my $out_list 	  = shift;
+
+	if ( $status =~ /^ERR/ ) {
+		print "$status\n";
+		return;
+	}
+
+	print "Profile deleted\n";
+
+} # End of DeleteProfile
+
+sub NfSenShell {
+	my $nfsend_socket = shift;
+
+	my ($rin, $rout, $rin1, $rin2);
+	$rin1 = $rin2 = '';
+	vec($rin1,fileno($nfsend_socket),1) = 1;
+	vec($rin2,fileno(STDIN),1) = 1;
+
+	$rin = $rin1 | $rin2;
+
+	my $_fd = select($nfsend_socket);
+	$| = 1;
+	select($_fd);
+	$_fd = select(STDOUT);
+	$| = 1;
+	select($_fd);
+
+	eval {
+		local $SIG{'__DIE__'} = 'DEFAULT';
+		local $SIG{ALRM} = sub { die; };
+		print "NfSen Shell - connection ready.\n";
+
+		my $done = 0;
+		while ( !$done ) {
+			print "> ";
+			select($rout=$rin, undef, undef, undef);
+
+			if (vec($rout,fileno($nfsend_socket),1)) {
+				my $buf;
+				my $len = sysread($nfsend_socket, $buf, 1024);
+  				$done = 1 unless $len;
+
+  				my $offset = 0;
+				print "\n";
+  				while($len)  {
+    				my $br = syswrite(STDOUT, $buf, $len, $offset);
+    				last unless $br;
+    				$offset += $br;
+    				$len    -= $br;
+					$done = 1 if $buf =~/OK Bye Bye$/;
+  				}
+			} 
+
+			if (vec($rout,fileno(STDIN),1)) {
+				my $buf;
+				my $len = sysread(STDIN, $buf, 1024);
+  				$done = 1 unless $len;
+
+  				my $offset = 0;
+  				while($len)  {
+    				my $br = syswrite($nfsend_socket, $buf, $len, $offset);
+    				last unless $br;
+    				$offset += $br;
+    				$len    -= $br;
+  				}
+			}
+		}
+	};
+	if ($@) {
+		return  "ERR Communication nfsend failed. $@\n";
+	}
+
+
+} # End of NfSenShell
+
+###################
+# Main starts here
+###################
+
+if ( exists $cmd_arg{'version'} || exists $cmd_arg{'V'} ) {
+	print "$0: $nfsen_version $VERSION\n";
+	exit;
+}
+
+if ( exists $cmd_arg{'h'}) {
+	usage();
+	exit;
+}
+
+if ( exists $cmd_arg{'help'} ) {
+	LongHelp();
+	exit;
+}
+
+if ( !NfConf::LoadConfig() ) {
+	die "ERR $Log::ERROR\n";
+}
+my $hints = NfSen::LoadHints();
+
+if ( $NfConf::SIMmode ) {
+	eval {
+		# Require optional module NfSenSim
+		require NfSenSim; import NfSenSim;
+	};
+	if ( $@ ) {
+		print "Required nfsen module 'NfSenSim' not found for simulation mode.\n";
+		print "$@\n";
+		exit;
+	} 
+	# add Reset command to CMD table
+	$CMD_lookup{'abort-reset'} = { 'nfsend' => 0, 'run'	=>	\&NfSenSim::ResetNfSen,	   'RunAsRoot'	=>	1, 'rc_command'	=> 1 }, 
+}
+
+select(STDOUT); $| = 1;	
+
+if ( exists $cmd_arg{'shell'} || exists $cmd_arg{'S'} ) { # nfsend command shell 
+	my $timeout = 120;
+	my $nfsend_socket = Nfcomm::nfsend_connect($timeout);
+	if ( !$nfsend_socket ) {
+		exit(255);
+	}
+	NfSenShell($nfsend_socket);
+} else {
+	DecodeCommand();
+}
+
+

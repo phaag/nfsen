@@ -1,0 +1,154 @@
+Quick Notes:
+============
+
+This is version 1.3.8 of NfSen. Use least nfdump 1.6.x,
+Do not use any earlier nfdump version, such as nfdump 1.5.x
+Make sure you have nfdump configured with option --enable-nfprofile
+
+Upgrade is supported only for NfSen versions v1.2.x. 
+older NfSen versions need to be upgraded in a first step to NfSen 1.2.4.
+
+What is NfSen:
+=============
+NfSen is a graphical WEB based front end for the nfdump netflow tools.
+See <http://nfdump.sourceforge.net>
+
+With NfSen, you can:
+- Display your netflow data from many sources: Flows, Packets and Bytes.
+- Easily navigate through the netflow data.
+- Process the netflow data within the specified time span.
+- Create history as well as continuous profiles.
+- Set alerts based on various conditions.
+- Write your own plug-ins to process and display netflow data on a regular 
+  interval.
+
+NfSen allows you to keep all the convenient advantages of the command 
+line using nfdump directly and gives you also a graphical overview over 
+your netflow data.
+
+A more detailed documentation is available in the doc directory. 
+
+NfSen is distributed under the BSD license - see BSD-license.txt
+
+Installation:
+-------------
+
+1. Prerequisites:
+- PHP and Perl:
+  NfSen is written in PHP and Perl and should run on any *NIX system.
+  At least Perl 5.10.1 and PHP > 4.1 with PHP socket extension is required.
+  NfSen also works with PHP 5 and apache 2.
+  Perl modules: Mail::Header and Mail::Internet. Install these Perl modules
+  prior to installing NfSen.
+- RRDtools
+  NfSen requires the RRD tools v1.0.x or > 1.2.11, at least the RRDs Perl 
+  Module.
+- nfdump tools
+  Make sure you have at least version 1.6.1 installed on your system. 
+  Do not use any older nfdump version!
+  Make sure you have nfdump configured with option --enable-nfprofile
+  You can download nfdump from sourceforge nfdump.sourceforge.net.
+  Please note: Each netflow source requires a semaphore in the global 
+  system table. If you have lots of different sources, check the system 
+  documentation about the max number of semaphores, or how to increase the 
+  this number respectively.
+
+NfSen has a very flexible directory layout. To simplify matters, 
+the default layout stores everything but the html pages under BASEDIR. 
+However, you may configure NfSen to fit your local needs. 
+See the nfsen-dist.conf config file. The netflow data is stored 
+under PROFILEDATADIR ( BASEDIR/profiles by default ). So make sure you have 
+enough disk space.
+
+To update your current NfSen installation goto point 3.
+
+2. First installation of NfSen:
+If you have installed all prerequisites, change to the etc directory and
+copy the NfSen config file nfsen-dist.conf to nfsen.conf. Edit nfsen.conf
+according your needs and setup. Make sure you have set the right values
+for the netflow sources. For any netflow source, make an entry in the 
+%sources hash. The comments in nfsen.conf should guide you. When you 
+are done, run the install.pl script in the distribution directory:
+
+./install.pl etc/nfsen.conf
+
+Running install.pl will:
+- Create the NfSen environment with all required directories.
+- Copy the php/html files into HTMLDIR.
+- Create the live profile. 
+- Prepares the RRD DBs for the live profile.
+
+After the installation, you will find the nfsen.conf file in CONFDIR.
+
+3. Update your current NfSen installation:
+Upgrade is supported only for NfSen v1.2.x. Any NfSen 1.1.x installations should
+be upgraded in a first step to NfSen 1.2.4.
+If you upgrade from any previous NfSen installation, make sure you have
+upgraded nfdump to version 1.5.5 according to this README file. 
+
+To upgrade your 1.2.x NfSen installation:
+
+   1.  Stop old nfsen, due to nfprofile incompatibilities.
+	   ./nfsen.rc stop
+   2.  Upgrade nfdump to stable 1.6.1. Do not forget to configure nfdump
+	   with --enable-nfprofile option.
+	   This update is required!
+
+   3.  Upgrade NfSen:
+
+      ./install.pl <path/to/your/nfsen/etc/nfsen.conf>
+
+	   This will update your current NfSen installation. and 
+       you're done.
+
+   4. If you have plugins installed, check the README.plugins file for some
+	  small changes required to be changed for each plugin.
+      If you have PortTracker installed, you need to update to the PortTracker
+      version included in the contrib directory, coming with NfSen. You need 
+	  not to rebuild your current db files, just rebuild nftrack and replace 
+	  the plugin files. See the INSTALL file.
+
+   5. Start NfSen:
+
+      BINDIR/nfsen start
+
+When updating from a newer snapshot ( > snapshot-20070110 ) or from early 1.3b 
+releases the normal update procedure will do:
+
+      ./install.pl <path/to/your/nfsen/etc/nfsen.conf>
+      BINDIR/nfsen reload
+
+4.  NfSen is now ready to use. 
+
+You may want to link the start/stop file BASEDIR/bin/nfsen.rc into your 
+appropriate rc.d directory. Start NfSen:
+
+BINDIR/nfsen start
+
+Point your web browser to nfsen.php. 
+( Typically http://yourserver/nfsen/nfsen.php )
+
+
+Notes for Solaris users:
+------------------------
+To make syslog work for NfSen set the appropriate parameter in nfsen.conf.
+See nfsen-dist.conf for the logging socket parameter.
+
+The Sys::Syslog perl Module on Solaris 10 is badly broken. You may want
+to upgrade Sys::Syslog to the latest available on CPAN.
+
+
+Notes on sub directory hierarchy support:
+-----------------------------------------
+As of snapshot 20060728 nfsen supports the sub directory hierarchy of nfdump. 
+When installing or upgrading NfSen, the layout is set to '0' ( see nfcapd(1) ),
+which means no layout.  If you want to make use of any sub hierarchy layout, 
+add '$SUBDIRLAYOUT = <num>;' to the nfsen.conf file. See nfsen-dist.conf for 
+more information. After changing the layout, run RebuildHierarchy.pl. 
+in $BINDIR to reorganize the data files to the new layout. Changing the layout 
+is possible at any other time later on. However, you must run 
+RebuildHierarchy.pl after changing $SUBDIRLAYOUT the config file.
+Note: This process will stop NfSen, as the upgrade requires a silent system.
+
+More information about NfSen as well as working with NfSen is available in 
+the documentation provided in the doc directory.

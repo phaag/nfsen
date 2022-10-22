@@ -1,0 +1,168 @@
+2017-01-19
+- Fix Security Vulenrability - which may execute arbitrary commands from the web interface.
+- Support rrdtools 1.6
+
+2014-12-23
+- Fix various incompatibilities with newer php and Perl versions
+- Fix empty details graph, if too many channels or resources were selected.
+- Fix argument bug in selecting the dstmac statistics
+- Fix bug in create history profiles: compression flag was not applied properly
+- Add periodic reload feature for Perls with mem leak.
+
+2012-01-29 1.3.6p1
+- Fix UNIVERSAL->import warning for new Perl 5.12
+- Fix sem* bugs. semaphore moved into Nfsem - initial installation broken
+- Fix IPv6 lookups
+- Fix lookups of IPs in ICMP listing
+- Add default values lifetime/maxsize for new profile - safty measure.
+- Add experimental interrupted expire ( only with nfdump patch or nfdump > 1.6.5 )
+
+2011-07-20 1.3.6
+- Fix potential XSS bugs
+- Fix email address validation in alerting. also allow ..@localhost
+- Add option 'all' in rebuild command to rebuild graphs
+- Extend lookup box to 400px
+- Add missing stat option from v9 into details.php
+- Extend too short limits from textareas from 50 to 10240
+- Add a total display at the bottom of the statistics table in details.php
+- Replace depricated split functions in php code
+- Replace IP lookup code with new AbuseWhois
+
+2010-07-24 1.3.5 stable version - bugfix release of nfsen-1.3.4
+- fix broken reconfig, when adding new sources
+- inherit 'live' channel parameters for new 1:1 profile
+
+2010-07-03 1.3.4 stable version - bugfix release of nfsen-1.3.3
+- fix installer problems with Module File::Copy make_path/mkpath
+- fix optarg bug in NfSenRC.pm
+- Add bigger scales in details page
+- Allow rrd version 1.4.x
+
+2010-05-01 1.3.3 stable version
+- Honour profile maxsize and max lifetime while building
+  Abort build when either limit is reached
+- Add cancal button while building a profile
+- Add delayed deleting profile. Prevent annoying message
+  "Can not delete profile while periodic update in progress"
+- Add FORMATDIR to config. Defaults to $VARDIR/fmt
+- Add FILTERDIR to config. Defaults to $VARDIR/filters
+- Add PIDDIR to config. Defaults to $VARDIR/run
+- Add INSTALLPATH to installer 
+- Fix Safari 4 Lookup box issues
+- Fix several small bugs/issues
+
+2009-06-08 1.3.2 stable release
+- Fix security bug - potential remote execution
+
+2009-13-03 1.3.1 stable release
+- fixing bugs from 1.3
+- Add support for RRD 1.3.x
+- Add parallel profiling patch
+
+2007-11-20 1.3 stable release
+- Fix bugs from last 1.3b
+- Add compression configuration for nfdump-1.5.6. See nfsen-dist.conf
+
+2007-08-24 1.3b-20070824
+- Bug fixes from 1.3b-20070719
+- Try to better handle Solaris Syslog 
+- Make install smooth on Solaris
+
+2007-07-19 1.3b-20070719
+- Release beta 1.3 for testing.
+- Number of bug fixes of last snapshot
+- Make nfsen clean up orphan data files when starting up.
+- Make some changes in default behaviour of netflow processing. Defaults to Top 10 any IP
+
+2007-03-06 snapshot-20070306
+- Add alerting module: NfAlert.pm, alerting.php, alerting.css alerting.js
+- Add shadow profiles.
+- Include bug fixes from last snapshot: feedback from users
+
+2007-01-26 snapshot-20070126
+- Replace pluging END routine by Cleanup due to errornous calling at the end of the comm server process
+- Make Opera work. minor change for in arg parsing
+- Fix bug for IPv6 filter checks
+- Fix some other small bugs reported back.
+
+2007-01-10 snapshot-20070110
+- Intermediate snapshot for developers - not for production
+- Major change: Add channel based architecture
+- Lots of face liftings for NfSen
+
+2006-07-28 snapshot-20060412
+- Add sub directory hierarchy support
+- Add PROFILEDATADIR disk space check
+- Fix various small bugs in snapshot-20060412
+
+2006-04-12 snapshot-20060412
+- Fix bug in profile rebuilder for new style profiles.
+
+2006-04-07 snapshot-20060407
+- Cleanups reported bugs from snapshot-20060325
+- Remove all direct nfsen/nfdump system calls from web frontend. use socket server instead.
+- Fix installation problem on Solaris 9/10 Sigh ..
+- Add 'type' to source definition, to make nfsen. sflow aware
+- Add nfsend socket server. Web server does not need to call nfsen command line directly
+
+2006-03-25 snapshot-20060325
+  Cleanups for snapshot
+
+2006-02-15
+- More flexible source handling: Add add/delete netflow source option
+  on a running system. cmd line nfsen understands now 'nfsen reconfig'
+- re-arrange RRD DBs: RRDs are now source based and no longer type based.
+  installer process needs to convert from old to new style layout. 
+  this conversion is a nightmare, but the price for the old design ...
+- fork off development tree
+
+2006-02-11 v1.2.4
+- Add IPv4 in processiing form for flow listings.
+
+2006-01-12 v1.2.3
+- Update processing form in details page to enable more nfdump 1.5 
+  features and IPv6 output formats. Quick fix till next version becomes ready.
+
+2006-01-03 v1.2.2
+- Update NfSen to run with nfdump 1.5 tools.
+
+2005-09-11 v1.2.1
+- Bug fixed in install.pl: permission problem fixed. 
+  Sigh .. always permissions ...
+- Bug fixed in install.pl: Initial installation may lock live profile, due to 
+  possible time overlap of installation and first run or Periodic.
+- Update details tab to make use of nfdump 1.4 'order by' options. 
+  nfdump 1.4 required now.
+2005-08-31 v1.2
+- New flexible directory layout.
+- Change 'bytes' to 'traffic' and display bits/s instead of bytes/s.
+- Add frontend plugins.
+- Switch between sum and rate in the stat data display.
+- Add various buttons to the processing tab for more easy working.
+- A lot of small changes to make NfSen run on many *nix without changes
+- Can work with rrdtool v.1.2.x
+- Add peak search to position cursor in details graph
+- Fix a few minor bugs.
+- Have NfSen to deal better with disk full events.
+- Add -X option to nfsen cmd line command to expire the profile right now.
+
+2005-04-21 v 1.1
+- Fixed some minor code html bugs
+- Add php function file_get_contents to be compatible with
+  php version < 4.3
+- Add line/stacked graph radio buttons in detailed view
+- Fixed several minor bugs.
+
+2005-03-31 v 1.1rc3
+- Install privileges fixed.
+- Updated docu.
+
+2005-03-29 v 1.1rc2
+- bug fix in install routine.
+- correct spelling errors
+
+2005-03-23 v 1.1rc1
+First public version.
+
+2005-02-21 v 1.0b
+Internal testing version

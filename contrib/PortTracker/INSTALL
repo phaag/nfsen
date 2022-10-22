@@ -1,0 +1,39 @@
+
+Please note: This is prototype software. Use it at you own risk :)
+To install PortTracker, follow the steps below:
+
+*** The sources for nftrack are now included in nfdump and are no longer
+included in this contrib directory. ***
+
+1. Get nfdump. You need at least version 1.6.5 or 1.5.8-NSEL.
+PortTracker does *NOT* work with nfdump-1.5.x!
+
+2. When building nfdump add --enable-nftrack as confgure parameter
+A command may look like: ./configure --enable-nfprofile --enable-nftrack
+make; make install will generate the binaries incl. nftrack
+
+3. Create the port DBs in a directory with at least 10GB disk space:
+This directory needs to be writable by the user $USER configured in nfsen.conf
+
+4. Edit Porttracker.pm:
+Set $PORTSDBDIR to the port DBs directory.
+
+5. Copy PortTracker.pm to the NfSen backend plugin dir.
+   Copy PortTracker.php to the NfSen frontend plugin dir.
+
+6. Edit nfsen.conf: Add the plugin for profile 'live': 
+Example:
+@plugins = (
+	[ 'live',   'PortTracker'],
+);
+
+7. Initialize the ports-db:
+As $USER run 'nftrack -I -d <path-to-ports-DBs>'
+This takes some minutes or so ... have a coffee
+
+8. Restart NfSen:
+Run './nfsen reload'
+Have a look at the syslog file to see if PortTracker loaded successfully:
+
+9. After the next 5min update cycle: Point your browser to the NfSen page 
+and select the Plugin Tab.
