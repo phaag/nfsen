@@ -41,7 +41,7 @@ function Init_ShowHide_profile()
 		else {
 			Table_set_toggle(channel);
      		var arrow;
-			// initialize collaps/expand channel arrow
+			// initialize collapse/expand channel arrow
 			for (i=0; i < arrow_suffix.length; i++ ) {
 				arrow = document.getElementById(channel + arrow_suffix[i] ).toggle = ShowHide;
 			}
@@ -50,7 +50,7 @@ function Init_ShowHide_profile()
 		}
 	}
 
-	// initialize collaps/expand all arrows	
+	// initialize collapse/expand all arrows
 	for (i=0; i < arrow_suffix.length; i++ ) {
 		document.getElementById("all_" + arrow_suffix[i] ).toggle = ShowHide;
 	}

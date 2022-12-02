@@ -38,6 +38,7 @@ package NfSenRC;
 use strict;
 use warnings;
 use NfSen;
+use Nfsources;
 use Log;
 
 # public map for collector mappings - more may be added in future
@@ -120,9 +121,10 @@ sub StartCollector {
 	# print "\nRun: $NfConf::PREFIX/$collector $args\n";
 
 	system("$NfConf::PREFIX/$collector $args");
-	my $exit_value  = $main::child_exit >> 8;
-	my $signal_num  = $main::child_exit & 127;
-	my $dumped_core = $main::child_exit & 128;
+	my $child_exit = defined $main::child_exit ? $main::child_exit : 0;
+	my $exit_value  = $child_exit >> 8;
+	my $signal_num  = $child_exit & 127;
+	my $dumped_core = $child_exit & 128;
 	if ( $exit_value != 0 ) {
 		print "$collector exec error: exit: $exit_value, signal: $signal_num, coredump: $dumped_core\n";
 	} else {
@@ -235,9 +237,10 @@ sub NfSen_start {
 
 	print "Starting nfsend";
 	system "$NfConf::BINDIR/nfsend";
-	my $exit_value  = $main::child_exit >> 8;
-	my $signal_num  = $main::child_exit & 127;
-	my $dumped_core = $main::child_exit & 128;
+	my $child_exit = defined $main::child_exit ? $main::child_exit : 0;
+	my $exit_value  = $child_exit >> 8;
+	my $signal_num  = $child_exit & 127;
+	my $dumped_core = $child_exit & 128;
 	if ( $exit_value != 0 ) {
 		print ": exec error: exit: $exit_value, signal: $signal_num, coredump: $dumped_core\n";
 	}

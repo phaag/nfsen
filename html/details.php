@@ -623,7 +623,7 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 							  	  "validate" => NULL),
 		"limitwhat" 	=> array( "required" => 0, 
 							  	  "default"  => array_key_exists('limitwhat', $process_form) ?
-										$process_form['limitwhat'] : '',
+										$process_form['limitwhat'] : 0,
 							  	  "allow_null" => 0,
 							  	  "match" => array( 0, 1),
 							  	  "validate" => NULL),

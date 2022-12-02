@@ -76,8 +76,8 @@ sub ValidateSources {
 				print "Error Ident: '$ident': Source identifiers must be between 1 and 19 chars long!\n";
 				return 0;
 			}
-			if ( $ident =~ /[^a-z0-9_\-]+/i ) {
-				print "Error Ident: '$ident': Source identifiers must contain only characters [a-zA-Z0-9_-] !\n";
+			if ( $ident =~ /[^a-z0-9_]+/i ) {
+				print "Error Ident: '$ident': Source identifiers must contain only characters [a-zA-Z0-9_] !\n";
 				return 0;
 			}
 

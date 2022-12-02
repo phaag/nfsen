@@ -590,8 +590,8 @@ Ex. 72, 72h, 4d 12h, 14days etc.', this, event, '200px')"><IMG SRC="icons/help.p
 		<input type="image" name="add_channel" value="add_channel" title="Add new channel" src="icons/plus.png" align="right">
 		</form>
 <?php } ?>
-		<a href="#null" onclick="ToggleAll('show')" id="all_r" title="expand channel list" <?php echo $style_arrow_right;?>><IMG SRC="icons/arrow.yellow.right.png" name="<?php echo $chan_id;?> right" border="0" alt="arrow right"></a>
-		<a href="#null" onclick="ToggleAll('hide')" id="all_d" title="collaps channel list"<?php echo $style_arrow_down;?>><IMG SRC="icons/arrow.yellow.down.png" name="<?php echo $chan_id;?> down" border="0" alt="arrow down"></a>	
+		<a href="#null" onclick="ToggleAll('show')" id="all_r" title="expand channel list" <?php echo $style_arrow_right;?>><IMG SRC="icons/arrow.yellow.right.png" name="arrow right" border="0" alt="arrow right"></a>
+		<a href="#null" onclick="ToggleAll('hide')" id="all_d" title="collapse channel list"<?php echo $style_arrow_down;?>><IMG SRC="icons/arrow.yellow.down.png" name="arrow down" border="0" alt="arrow down"></a>
 		Channel List:
 	</td>
 </tr>
@@ -1155,11 +1155,7 @@ function Process_stat_tab ($tab_changed, $profile_changed) {
 		
 		if ( array_key_exists('description', $_POST ) ) {
 			$_tmp = preg_replace("/\r/", '', $_POST['description']);
-			if (!get_magic_quotes_gpc()) {
-   				$description = addslashes($_tmp);
-			} else {
-   				$description = $_tmp;
-			}
+			$description = addslashes($_tmp);
 			$cmd_opts['description'] = explode("\n", $description);
 		}
 

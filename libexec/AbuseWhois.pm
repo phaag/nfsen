@@ -381,7 +381,7 @@ sub Reverse_name($) {
 	my $hostname = scalar gethostbyaddr(inet_pton($af, $ip), $af);
 
 	if ( !defined $hostname ) {
-		$hostname = '<not found>';
+		$hostname = '&lt;not found&gt;';
 	}
 
 	return $hostname;
@@ -743,7 +743,7 @@ sub Query($$) {
 	}
 
 	my $hostname = Reverse_name($ip);
-	print $sock "<b>$ip -> $hostname</b>\n";
+	print $sock "<b>$ip -&gt; $hostname</b>\n";
 	print $sock "<pre>\n";
 
 	my ($net, $org_id) = ARNIN_stage1($ip);

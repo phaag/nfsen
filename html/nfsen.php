@@ -348,9 +348,7 @@ function filter_validate(&$filter, $opts) {
 		return 0;
 	}
 
-	if (!get_magic_quotes_gpc()) {
-   		$filter = addslashes($filter);
-	}
+	$filter = addslashes($filter);
 	// $filter = escapeshellarg($filter);
 	$filter = explode("\n", $filter);
 	$opts = array();
@@ -373,11 +371,7 @@ function filter_validate(&$filter, $opts) {
 function description_validate(&$description, $opts) {
 
 	$_tmp = preg_replace("/\r/", '', $description);
-	if (!get_magic_quotes_gpc()) {
-   		$description = addslashes($_tmp);
-	} else {
-   		$description = $_tmp;
-	}
+	$description = addslashes($_tmp);
 	$description = explode("\n", $description);
 	return 0;
 

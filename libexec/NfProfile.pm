@@ -3441,7 +3441,7 @@ sub CheckProfiles {
 				} else {
 					$profileinfo{'type'} = 1;
 				}
-				my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
+				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
 				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( -f "$NfConf::PROFILESTATDIR/$profilepath/.CANCELED" ) {
@@ -3453,7 +3453,7 @@ sub CheckProfiles {
 				} else {
 					$profileinfo{'type'} = 1;
 				}
-				my $status = DoRebuild(\%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
+				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
 				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( $profileinfo{'locked'} ) {

@@ -101,6 +101,7 @@ sub LoadConfig {
 	my $InitConfigFile = shift;
 
 	my $CONFFILE = defined $InitConfigFile ? $InitConfigFile : "%%CONFDIR%%/nfsen.conf";
+	$CONFFILE = "./$CONFFILE" unless substr($CONFFILE, 0, 1) eq "/";
 	if ( !-f "$CONFFILE" ) {
 		$Log::ERROR = "No NFSEN config file found.";
 		return undef;

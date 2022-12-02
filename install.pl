@@ -553,7 +553,7 @@ sub UpgradeProfiles {
 				if( ! -f "$NfConf::PROFILEDATADIR/$profilepath/$channel/.nfstat") { 
 					# no shadow profile, but missing channel stat
 					print "Rebuilding profile stats for '$profilegroup/$profilename'\n";
-					NfProfile::DoRebuild(\%profileinfo, $profilename, $profilegroup, $profilepath, 1, 0);
+					NfProfile::DoRebuild(*STDOUT, \%profileinfo, $profilename, $profilegroup, $profilepath, 1, 0);
 					NfProfile::WriteProfile(\%profileinfo);
 				}
 				# make sure it's own by nfsen_uid after the rebuild
