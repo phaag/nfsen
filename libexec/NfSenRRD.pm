@@ -1,5 +1,6 @@
 #!%%PERL%%
 #
+#  Copyright (c) 2022, Peter Haag
 #  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
 #  All rights reserved.
 #
@@ -27,11 +28,6 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-#  $Author: peter $
-#
-#  $Id: NfSenRRD.pm 72 2017-01-22 13:04:08Z peter $
-#
-#  $LastChangedRevision: 72 $
 
 package NfSenRRD;
 
@@ -73,7 +69,7 @@ sub GetRRDoffset {
 	if ( $rrd_version < 1.1 ) { # it's RRD 1.0.x
 		$RRDoffset = 77;
 	}
-	if ( $rrd_version >= 1.2 && $rrd_version < 1.8 ) {
+	if ( $rrd_version >= 1.2 && $rrd_version < 1.9 ) {
 		$RRDoffset = 67;
 	}
 
