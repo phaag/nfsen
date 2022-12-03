@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#
+#  Copyright (c) 2020,  Peter Haag
 #  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
 #  All rights reserved.
 #
@@ -28,13 +28,6 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-#  $Author: peter $
-#
-#  $Id: install.pl 71 2017-01-19 16:16:21Z peter $
-#
-#  $LastChangedRevision: 71 $
-#
-#  Last changed date:    $Date: 2017-01-19 17:16:21 +0100 (Thu, 19 Jan 2017) $
 
 require v5.10.1;
 
@@ -55,8 +48,8 @@ use File::Copy;
 use File::Path;
 use RRDconvertv1;
 
-my $VERSION = '$Id: install.pl 71 2017-01-19 16:16:21Z peter $';
-my $nfsen_version = "1.3.8";
+my $VERSION = 'install.pl 2022-12-19';
+my $nfsen_version = "1.3.9";
 
 my @ProfileTag = ( 
 	"# \n",
@@ -211,7 +204,7 @@ sub VerifyConfig {
 	if ( defined $major && defined $minor) {
 		if ( $major >= 1 && $minor >= 6 ) {
 			print "Found $out[0]\n";
-		} elsif ( $out[0] =~ /Version:\s1.5.8-\d+-NSEL/ )  {
+		} elsif ( $out[0] =~ /Version:\s.+\d+-NSEL/ )  {
 			print "Found nfdump NSEL\n";
 		} else {
 			print "$out[0]\n";
@@ -248,7 +241,7 @@ sub VerifyConfig {
 		die "\$low_water = $NfConf::low_water outside range 1..100";
 	}
 
-	return ($nfsen_uid, $www_gid );
+	return ($nfsen_uid, $www_gid, $minor );
 
 } # End of VerifyConfig
 
@@ -714,7 +707,9 @@ if ( defined $NfConf::INSTPREFIX ) {
 }
 
 
-my ($nfsen_uid, $www_gid ) = VerifyConfig();
+my ($nfsen_uid, $www_gid, $nfdump_version ) = VerifyConfig();
+$$$hints{'nfdump'} = $nfdump_version;
+
 my $nfsen_run = 0;
 
 # test for two files of old layout

@@ -1,5 +1,6 @@
 #!%%PERL%%
 #
+#  Copyright (c) 2022, Peter Haag
 #  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
 #  All rights reserved.
 #
@@ -27,11 +28,6 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-#  $Author: peter $
-#
-#  $Id: NfSenRC.pm 69 2014-06-23 19:27:50Z peter $
-#
-#  $LastChangedRevision: 69 $
 
 package NfSenRC;
 
@@ -83,10 +79,14 @@ sub StartCollector {
 	
 	my $uid			= $NfConf::USER;
 	my $gid 		= $NfConf::WWWGROUP  ? "$NfConf::WWWGROUP"   : "";
+	my $nfdump_version = $$NfSen::hints{'nfdump'};
 	my $buffer_opts = $NfConf::BUFFLEN ? "-B $NfConf::BUFFLEN"   : "";
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
 	my $pidfile	 	= "$NfConf::PIDDIR/p${port}.pid";
-	my $extensions  = $NfConf::EXTENSIONS ? $NfConf::EXTENSIONS : "";
+	my $extensions  = "";
+	if ( $nfdump_version == 6 ) {
+		$extensions = $NfConf::EXTENSIONS ? $NfConf::EXTENSIONS : "";
+	} 
 
 	my $pid = CollectorStatus($port);
 	if ( $pid > 0 ) {
@@ -94,8 +94,8 @@ sub StartCollector {
 		return;
 	}
 
-	my $ziparg = $NfConf::ZIPcollected ? '-z' : '';
-	my $common_args = "-w -D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions";
+	my $ziparg = $NfConf::ZIPcollected ? '-y' : '';
+	my $common_args = "-D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions";
 	my $src_args;
 	my $optargs = '';
 	if ( scalar @SourceList > 1 ) {
@@ -114,7 +114,7 @@ sub StartCollector {
 		my $ident = shift @SourceList;
 		my $profiledir	= "$NfConf::PROFILEDATADIR/live/$ident";
 		$optargs     = exists $NfConf::sources{$ident}{'optarg'} ? $NfConf::sources{$ident}{'optarg'} : '';
-		$src_args = "-I $ident -l $profiledir ";
+		$src_args = $nfdump_version == 7 ? "-I $ident -w $profiledir" : "-I $ident -l $profiledir ";
 	}
 
 	my $args = "$common_args $src_args $optargs";
@@ -297,7 +297,7 @@ sub NfSen_stop {
 
 sub NfSen_status {
 
-	print "NfSen version: $$NfSen::hints{'version'}\n";
+	print "Version nfSen: $$NfSen::hints{'version'}, nfdump: $$NfSen::hints{'nfdump'}\n";
 	if ( $NfConf::SIMmode ) {
 		print "NfSen status: Simulation mode\n";
 	} else {
