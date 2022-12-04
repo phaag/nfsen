@@ -1373,7 +1373,7 @@ sub DoRebuild {
 			my $channellist = join ':', keys %{$liveprofile{'channel'}};
 			my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
 			my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
-			$arg   .= "-z " if $NfConf::ZIPprofiles;
+			$arg   .= "-y " if $NfConf::ZIPprofiles;
 
 			# profile missing slots
 			if ( $t <= $tend ) {

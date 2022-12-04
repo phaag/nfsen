@@ -1,6 +1,7 @@
 <?php
 /*
  *
+ *  Copyright (c) 2022 Peter Haag
  *  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
  *  All rights reserved.
  *
@@ -28,18 +29,12 @@
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  * 
- *  $Author: phaag $
- *
- *  $Id: nfsen.php 22 2007-11-20 12:27:38Z phaag $
- *
- *  $LastChangedRevision: 22 $
- *
  */
 
 // The very first function to call
 session_start();
 
-$expected_version = "1.3.8";
+$expected_version = "1.3.9";
 
 // Session check
 if ( array_key_exists('backend_version', $_SESSION ) && $_SESSION['backend_version'] !=  $expected_version ) {
@@ -91,7 +86,8 @@ function SendHeader ($established) {
 
 	$_tab =  array_key_exists('tab', $_SESSION) ? $_SESSION['tab'] : 0;
 	if ( array_key_exists('tleft', $_SESSION ) ) {
-		$str = $TabList[$_tab] == 'Details' ? strftime("%b %d %Y - %H:%M", $_SESSION['tleft']) : 'Overview';
+		$datestr = date('M d Y - H:i T', $_SESSION['tleft']);
+    $str = $TabList[$_tab] == 'Details' ? $datestr : 'Overview';
 	} else {
 		$str = '';
 	}

@@ -1,8 +1,21 @@
-Quick Notes:
-============
+Notes:
+======
 
-This is version 1.3.8 of NfSen. Use least nfdump 1.6.x,
-Do not use any earlier nfdump version, such as nfdump 1.5.x
+This is version 1.3.9 of NfSen. It is a compatibility version for
+new nfdump-1.7.x. NfSen 1.3.9 works with nfdump 1.6.20 and later
+as well with nfdump-1.7.x.
+Do not use any earlier nfdump version < 1.6.20 as well as nfdump 1.5.x
+
+Notes for nfdump-1.7.x users:
+nfdump-1.7.x uses a new binary format. Creating profiles from historical
+data, collected with nfdump-1.6.x does not work. Profiling works for
+all data version 2 from nfdump-1.7.
+
+With this update, nfsen-1.3.9 is php 8.1 ready.
+
+NOTE: *nfsen is no longer under development*
+
+Legacy notes:
 Make sure you have nfdump configured with option --enable-nfprofile
 
 Upgrade is supported only for NfSen versions v1.2.x. 

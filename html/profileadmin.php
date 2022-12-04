@@ -631,6 +631,7 @@ function NewProfileDialog ($new_profile) {
 
 	$liveprofile = ReadProfile('./live');
 	$sources = array_keys($liveprofile['channel']); 
+	$selected_channel = array();
 
 	$live_start  = UNIX2DISPLAY($liveprofile['tstart']);
 	$tnow		 = time();

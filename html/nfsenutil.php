@@ -399,17 +399,17 @@ function SubdirHierarchy( $t ) {
 
 	$subdir_def = array (
 		"",
-		"%Y/%m/%d",
-		"%Y/%m/%d/%H",
-		"%Y/%W/%u",
-		"%Y/%W/%u/%H",
-		"%Y/%j",
-		"%Y/%j/%H",
-		"%Y-%m-%d",		# %F not supported by PHP
-		"%Y-%m-%d/%H"
+    "Y/m/d",
+    "Y/m/d/H",
+    "Y/W/l",
+    "Y/W/l/H",
+    "Y/z",
+    "Y/z/H",
+    "Y-m-d",
+    "Y-m-d/H",
 	);
 
-	return strftime ($subdir_def[$SUBDIRLAYOUT], $t);
+	return date ($subdir_def[$SUBDIRLAYOUT], $t);
 
 } // End of SubdirHierarchy
 

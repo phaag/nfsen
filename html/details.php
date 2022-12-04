@@ -808,7 +808,10 @@ function DisplayDetails () {
 		print "</td>\n";
 	}
 	print "<td style='vertical-align: bottom;'>\n";
-	$str = strftime("%b %d %Y - %H:%M", $_SESSION['profileinfo']['tstart']);
+	$str = date('M d Y - H:i T', $_SESSION['profileinfo']['tstart']);
+
+	$dt = date_create($_SESSION['profileinfo']['tstart']);
+	echo formatLanguage($dt, 'd F Y','pl');
 
 	$expire = $_SESSION['profileinfo']['expire'];
 	if ( $expire == 0 ) {
@@ -847,9 +850,9 @@ function DisplayDetails () {
 	print "<tr><td>Type:</td><td>$type</td></tr>";
 	print "<tr><td>Max:</td><td>$maxsize</td></tr>";
 	print "<tr><td>Exp:</td><td>$expire</td></tr>";
-	print "<tr><td>Start:</td><td>$str $TZname</td></tr>\n";
+	print "<tr><td>Start:</td><td>$str</td></tr>\n";
 	$str = strftime("%b %d %Y - %H:%M", $_SESSION['profileinfo']['tend']);
-	print "<tr><td>End:</td><td>$str $TZname</td></tr>\n";
+	print "<tr><td>End:</td><td>$str</td></tr>\n";
 	print "</table>\n";
 
 	print "</td>\n";
@@ -1008,11 +1011,13 @@ function DisplayDetails () {
 	</tr>
 	</table>
 <?php
+	$dateleft = date('M d Y - H:i T', $_SESSION['tleft']);
 	if ( $_SESSION['tleft'] == $_SESSION['tright'] ) {
-		$tslot = "timeslot " . strftime("%b %d %Y - %H:%M", $_SESSION['tleft']);
+		$tslot = "timeslot $dateleft";
 	} else {
-		$tslot = "timeslot " . strftime("%b %d %Y - %H:%M", $_SESSION['tleft']) . 
-			" - " . strftime("%b %d %Y - %H:%M", $_SESSION['tright']);
+	$datestr = date('M d Y - H:i T', $_SESSION['tleft']);
+		$dateright = date('M d Y - H:i T', $_SESSION['tright']);
+		$tslot = "timeslot $dateleft - $dateright";
 	}
 
 	$num_channels = count(array_keys($_SESSION['profileinfo']['channel']));
