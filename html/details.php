@@ -1,13 +1,10 @@
 <?php
 
-
 include "process.php";
 
 $DisplayOrder = array ( 'any', 'TCP', 'UDP', 'ICMP', 'other' );
 
 $TypeOrder	  = array ( 'flows', 'packets', 'traffic');
-
-
 
 /* 
  * scale factor: Number of  (cycletime) min slices per pixel
@@ -809,9 +806,6 @@ function DisplayDetails () {
 	}
 	print "<td style='vertical-align: bottom;'>\n";
 	$str = date('M d Y - H:i T', $_SESSION['profileinfo']['tstart']);
-
-	$dt = date_create($_SESSION['profileinfo']['tstart']);
-	echo formatLanguage($dt, 'd F Y','pl');
 
 	$expire = $_SESSION['profileinfo']['expire'];
 	if ( $expire == 0 ) {

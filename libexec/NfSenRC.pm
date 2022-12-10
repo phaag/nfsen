@@ -196,6 +196,11 @@ sub NfSen_start {
 		return;
 	}
 
+	if ( -f "$NfConf::PIDDIR/nfsend.pid" && -z "$NfConf::PIDDIR/nfsend.pid" ) {
+			print "Unclean shutdown - zero size pid file\n";
+			unlink "$NfConf::PIDDIR/nfsend.pid";
+	}
+
 	# Check if NfSen is already running
 	if ( -f "$NfConf::PIDDIR/nfsend.pid" ) {
 		open PID, "$NfConf::PIDDIR/nfsend.pid" || 
