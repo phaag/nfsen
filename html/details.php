@@ -845,7 +845,7 @@ function DisplayDetails () {
 	print "<tr><td>Max:</td><td>$maxsize</td></tr>";
 	print "<tr><td>Exp:</td><td>$expire</td></tr>";
 	print "<tr><td>Start:</td><td>$str</td></tr>\n";
-	$str = strftime("%b %d %Y - %H:%M", $_SESSION['profileinfo']['tend']);
+	$str = date('M d Y - H:i T', $_SESSION['profileinfo']['tend']);
 	print "<tr><td>End:</td><td>$str</td></tr>\n";
 	print "</table>\n";
 
