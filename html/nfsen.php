@@ -1,6 +1,5 @@
 <?php
 /*
- *
  *  Copyright (c) 2022 Peter Haag
  *  Copyright (c) 2004, SWITCH - Teleinformatikdienste fuer Lehre und Forschung
  *  All rights reserved.
@@ -41,7 +40,7 @@ if ( array_key_exists('backend_version', $_SESSION ) && $_SESSION['backend_versi
 	session_destroy();
 	session_start();
 	$_SESSION['version'] = $expected_version;
-	print "<h1>Frontend - Backend version missmatch!</h1>\n";
+	print "<h1>Frontend - Backend version mismatch!</h1>\n";
 }
 
 include ("conf.php");

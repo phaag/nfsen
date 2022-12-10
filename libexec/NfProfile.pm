@@ -1247,7 +1247,7 @@ sub DoRebuild {
 
 	} else {
 		if ( $$profileinfo{'name'} ne $profile ) {
-			syslog("warning", "Profile name missmatch - Set '$$profileinfo{'name'}' to '$profile'");
+			syslog("warning", "Profile name mismatch - Set '$$profileinfo{'name'}' to '$profile'");
 			$$profileinfo{'name'} 	= $profile;
 			$$profileinfo{'group'}	= $profilegroup;
 		}
