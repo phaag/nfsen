@@ -1,3 +1,9 @@
+2023-02-10
+- Fix #5 - CYCLETIME.
+
+2022-12-22
+- Re-vitalize NfSen on github. Adapt for nfdump-1.7.x
+
 2017-01-19
 - Fix Security Vulenrability - which may execute arbitrary commands from the web interface.
 - Support rrdtools 1.6

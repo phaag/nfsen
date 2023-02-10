@@ -83,6 +83,7 @@ sub StartCollector {
 	my $buffer_opts = $NfConf::BUFFLEN ? "-B $NfConf::BUFFLEN"   : "";
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
 	my $pidfile	 	= "$NfConf::PIDDIR/p${port}.pid";
+	my $twin = "-t 300";
 	my $extensions  = "";
 	if ( $nfdump_version == 6 ) {
 		$extensions = $NfConf::EXTENSIONS ? $NfConf::EXTENSIONS : "";
@@ -95,7 +96,10 @@ sub StartCollector {
 	}
 
 	my $ziparg = $NfConf::ZIPcollected ? '-y' : '';
-	my $common_args = "-D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions";
+	if ( defined $NfConf::CYCLETIME ) {}
+		$twin = "-t " . $NfConf::CYCLETIME;
+	}
+	my $common_args = "-D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions $twin";
 	my $src_args;
 	my $optargs = '';
 	if ( scalar @SourceList > 1 ) {
@@ -221,7 +225,7 @@ sub NfSen_start {
 	NfSen::CleanOrphans();
 
 	# Decide how many collectors to start. 
-	# nfcapd 1.6.x can handle several sources at the same port
+	# nfcapd can handle several sources at the same port
 	my %AllCollectors;
 	foreach my $source ( sort keys %NfConf::sources ) {
 		my $port = $NfConf::sources{$source}{'port'};
