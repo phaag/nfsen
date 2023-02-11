@@ -96,7 +96,7 @@ sub StartCollector {
 	}
 
 	my $ziparg = $NfConf::ZIPcollected ? '-y' : '';
-	if ( defined $NfConf::CYCLETIME ) {}
+	if ( defined $NfConf::CYCLETIME ) {
 		$twin = "-t " . $NfConf::CYCLETIME;
 	}
 	my $common_args = "-D -p $port -u $uid -g $gid $buffer_opts $subdirlayout -P $pidfile $ziparg $extensions $twin";
