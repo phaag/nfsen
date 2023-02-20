@@ -666,7 +666,7 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 		if ( array_key_exists($_tmp, $OutputFormatOption)) {
 			SetMessage('error', "Can not delete built in format '$_tmp'");
 		} else if ( !array_key_exists($_tmp, $_SESSION['formatlist'])) {
-			SetMessage('error', "Unknon format '$_tmp'");
+			SetMessage('error', "Unknown format '$_tmp'");
 		} else {
 			$cmd_opts['format'] = $_tmp;
 			$cmd_out =  nfsend_query("delete-format", $cmd_opts, 0);
@@ -1380,7 +1380,7 @@ function DisplayProcessing() {
 		<INPUT TYPE="button" NAME="JSbutton2" Value="All Sources" onClick="SelectAllSources()">
 	</TD>
 	<td style="vertical-align:top;">
-		<textarea name="filter" id="filter" multiline="true" wrap="phisical" rows="6" cols="50" maxlength="10240"><?php
+		<textarea name="filter" id="filter" multiline="true" wrap="physical" rows="6" cols="50" maxlength="10240"><?php
 			$display_filter = array_key_exists('editfilter', $process_form) ? $process_form['editfilter'] : $process_form['filter'];
 			foreach ( $display_filter as $line ) {
 				print htmlspecialchars(stripslashes($line)) . "\n";
@@ -1724,7 +1724,7 @@ function DisplayProcessing() {
                                         	array_push($replacements, "$1  $hap_pic");
 					} else {
 						if ($ip_and_port_columns) { // matches cases when both ip and port are available but are located in separate columns
-							// ICMP verion
+							// ICMP version
 							$ip_and_port_pattern = "/(\s*)([^\s]+)(\s+)(0|\d\.\d)/";
 							$ip_and_port_replacement = "$1$2$3$4 " .
 								"<a href=\"nfsen.php?tab=5&sub_tab=" . $hap4nfsen_id . "&ip=$2&mode=new\" title='HAP graphlet for $2'>$hap_pic</a>";

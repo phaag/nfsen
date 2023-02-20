@@ -351,7 +351,7 @@ function SlotSelectInit(ts, te, ps, tcs, width, rrd_off) {
 	var StartLine = document.getElementById("StartLine");
 	var CursorDragHandle   = document.getElementById("CursorDragHandle");
 
-	// postition the cursor
+	// position the cursor
 	StartLine.style.top  = yposbox   + "px";
 	StartLine.style.left = xposstart + "px";
 	StartLine.style.display = '';
@@ -366,7 +366,7 @@ function SlotSelectInit(ts, te, ps, tcs, width, rrd_off) {
 
 	/* 	while an object is invisible, it's dimensions are set to 0 by the browser
 		therefore, we assume, it's our standard handle with z = 6, and hard code it into 
-		the postion above. If not correct it now. But doing so, does not proper display the handle
+		the position above. If not correct it now. But doing so, does not proper display the handle
 	 */
 	if ( z != 6 ) {
 		CursorDragHandle.style.left	= xposstart - z + "px";
@@ -746,7 +746,7 @@ function HandleFilter(mode) {
 		}
 
 		document.getElementById("filter_name").value = value;
-		// prevent error message of possible garbage or errornous filter in text box
+		// prevent error message of possible garbage or erroneous filter in text box
 		document.getElementById("filter").value = '';
 		done=1;
 		form_ok = true;
@@ -818,7 +818,7 @@ function HandleFilter(mode) {
 		} else {
 			form_ok = true;
 			document.getElementById("filter_name").value = edit_filter;
-			// prevent error message of possible garbage or errornous filter in text box
+			// prevent error message of possible garbage or erroneous filter in text box
 			document.getElementById("filter").value = '';
 		}
 		return;

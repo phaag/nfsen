@@ -47,7 +47,7 @@ sub ResetNfSen {
 	
 	print "Reset NfSen:\n";
 	if ( -f "$NfConf::PIDDIR/nfsend.pid" ) {
-		print "Stop NfSen while reseting ...\n";
+		print "Stop NfSen while resetting ...\n";
 		NfSenRC::NfSen_stop();
 	}
 

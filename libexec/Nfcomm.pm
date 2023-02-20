@@ -984,7 +984,7 @@ sub ArgDecode {
 #	"required" 	=> 1, 						, 0 or 1 must exists in $opts, must not be undef
 #	"allow_undef"=> 1, 						, 0 or 1 allow value to be undef
 #	"default"  	=> undef, 					, if not exists or not defined use this default, maybe undef
-#	"match" 	=> "/[^A-Za-z0-9\-+_]+/" 	, value must satify this reges, may be undef
+#	"match" 	=> "/[^A-Za-z0-9\-+_]+/" 	, value must satisfy this reges, may be undef
 #	"validate" 	=> undef),					, additional validate function to call for further processing, may be undef
 #	"scrub"	-> 0							, 0 or 1 strip leading/trailing white spaces 
 #

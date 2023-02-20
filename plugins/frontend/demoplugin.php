@@ -52,7 +52,7 @@ function demoplugin_Run( $plugin_id ) {
 	$opts['colour2'] = $colour2;
 	$opts['colours'] = $colours;
 
-	// call command in backened plugin
+	// call command in backend plugin
     $out_list = nfsend_query($command, $opts);
 
 	// get result

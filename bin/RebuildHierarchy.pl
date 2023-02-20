@@ -84,7 +84,7 @@ sub ISO2UNIX {
 		return 0;
 	}
 
-	$isotime =~ s/\-//g;	# allow '-' to structur time string
+	$isotime =~ s/\-//g;	# allow '-' to structure time string
 
 	# 2004 02 13 12 45 /
 	my $sec = 0;
@@ -199,7 +199,7 @@ if ( !NfSen::root_process() ) {
 
 
 if ( !defined $NfConf::SUBDIRLAYOUT ) {
-	die "No sub hierachy layout defined in config file\n";
+	die "No sub hierarchy layout defined in config file\n";
 }
 my $hints = NfSen::LoadHints();
 
@@ -246,7 +246,7 @@ if ( !defined $uid || !defined $gid ) {
 } 
 
 # go ahead
-print "Make sure NfSen is not runnig: shut down NfSen:\n";
+print "Make sure NfSen is not running: shut down NfSen:\n";
 NfSenRC::NfSen_stop();
 
 foreach my $profilegroup ( @AllProfileGroups ) {

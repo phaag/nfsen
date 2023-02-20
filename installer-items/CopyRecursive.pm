@@ -65,7 +65,7 @@ sub fcopy {
 	  chown $UID, $GID, $_[1] if ( defined $UID and defined $GID );
 	  chmod $MODE, $_[1] if defined $MODE;
    }
-   return wantarray ? (1,0,0) : 1; # use 0's incase they do math on them and in case rcopy() is called in list context = no uninit val warnings 
+   return wantarray ? (1,0,0) : 1; # use 0's in case they do math on them and in case rcopy() is called in list context = no uninit val warnings 
 }
 
 sub rcopy { -d $_[0] ? dircopy(@_) : fcopy(@_) }
@@ -174,7 +174,7 @@ None by default. But you can export all the functions as in the example above.
 This function uses File::Copy's copy() function to copy a file but not a directory.
 One difference to File::Copy::copy() is that fcopy attempts to preserve the mode (see Preserving Mode below)
 The optional $buf in the synopsis if the same as File::Copy::copy()'s 3rd argument
-returns the same as File::Copy::copy() in scalar context and 1,0,0 in list context to accomidate rcopy()'s list context on regular files. (See below for more info)
+returns the same as File::Copy::copy() in scalar context and 1,0,0 in list context to accommodate rcopy()'s list context on regular files. (See below for more info)
 
 =head2 dircopy()
 
@@ -194,7 +194,7 @@ In list context it returns the number of files and directories, number of direct
 
 This function will allow you to specify a file *or* directory. It calls fcopy() if its a file and dircopy() if its a directory.
 If you call rcopy() (or fcopy() for that matter) on a file in list context, the values will be 1,0,0 since no directories and no depth are used. 
-This is important becasue if its a directory in list context and there is only the initial directory the return value is 1,1,1.
+This is important because if its a directory in list context and there is only the initial directory the return value is 1,1,1.
 
 =head2 Preserving Mode
 
