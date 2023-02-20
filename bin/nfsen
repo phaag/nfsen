@@ -128,9 +128,9 @@ sub LongHelp {
 
   --commit-profile|-c <profile>
     Commit  a new profile with <profile> == [profilegroup/]profilename
-    A new created profile with all initial channels added is commited. 
+    A new created profile with all initial channels added is committed. 
     A history profile is built. A continuous profile starts profiling.
-    Only profiles in status 'new' can be commited.
+    Only profiles in status 'new' can be committed.
 
   --delete-profile|-d <profile>
     Delete profile with <profile> == [profilegroup/]profilename
@@ -158,8 +158,8 @@ sub LongHelp {
     --rebuild-profile|-r <profile> [all]
     Rebuilds profile with <profile> == [profilegroup/]profilename
     Scans all channels in the given profile and recalculates the size. 
-	If the optional parameter 'all' is given, the RRDs are rebuilded according
-    to the available data, and therefore all graphs are rebuilded. Use with care.
+    If the optional parameter 'all' is given, the RRDs are rebuilt according
+    to the available data, and therefore all graphs are rebuilt. Use with care.
 
     --expire-profile|-X <profile>
     Immediately expires the given profile with <profile> == [profilegroup/]profilename
@@ -174,7 +174,7 @@ sub LongHelp {
       Alternatively specify the profile with <profilename> == [profilegroup/]profilename
 
       profilegroup=<profilegroup>
-      Alternatively specfy the profile group with <profilegroup> == profilename
+      Alternatively specify the profile group with <profilegroup> == profilename
 
     Any valid combination is possible to specify a channel, however the name must
     be non-ambiguous.
@@ -190,7 +190,7 @@ sub LongHelp {
       Set the specified filter for this channel. Needs to be a valid nfdump filter.
 
       colour|color=<#num>
-      Set the colour for this channel to be displyed. Format: #rrggbb
+      Set the colour for this channel to be displayed. Format: #rrggbb
 
       sign=+|-
       Sets the +/- y-axis for this channel. Defaults to '+'
@@ -391,7 +391,7 @@ sub DecodeCommand {
 			# check for a long opt
 			if ( exists $CMD_Decode{$cmd_opt} ) {
 				my $paramref = $CMD_Decode{$cmd_opt};
-				# add paramater 
+				# add parameter 
 				if ( defined $$paramref[1] ) {
 					if ( $$paramref[1] =~ /(.+)=(.+)/ ) {
 						$opts{$1} = $2;
@@ -579,7 +579,7 @@ sub GetProfile {
 		return;
 	}
 
-	# formated output
+	# formatted output
 	my $type = $$out_list{'type'};
 
 	if ( exists $$out_list{'description'} ) {
@@ -736,7 +736,7 @@ sub GenericListProfile {
 	my %opts;
 	my ($profile, $profilegroup);
 
-	# in case we have a combind profile/channel specification
+	# in case we have a combined profile/channel specification
 	if ( exists $$cmd_opts{'channel'} ) {
 		my $dummy;
 		NfProfile::ChannelDecode($cmd_opts, \$dummy);

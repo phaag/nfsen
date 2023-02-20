@@ -307,7 +307,7 @@ function ProfileDialog ( ) {
 	if ( $_SESSION['profileinfo']['type'] == 0 ) {
 		$type = 'live';
 	} else {
-		$type  = ($_SESSION['profileinfo']['type'] & 3 ) == 2 ? "Continous" : "History";
+		$type  = ($_SESSION['profileinfo']['type'] & 3 ) == 2 ? "Continuous" : "History";
 		$type .= ($_SESSION['profileinfo']['type'] & 4) > 0  ? '&nbsp;/&nbsp;shadow' : '';
 	}
 
@@ -466,7 +466,7 @@ this, event, '200px')"><IMG SRC="icons/help.png" border="0" alt="help icon"></a>
 	<form style="display: inline;" name="profiletypeform" action="<?php  echo $self;?>"
 		onSubmit="return ConfirmNewType(<?php echo $current_type; ?>)" method="POST" >
 		<input type="radio" name="profile_type" value="2" <?php echo $current_type == 2 ? 'checked' : ''; ?>> 
-		Continous Profile<br>
+		Continuous Profile<br>
 <?php
 		$disable_mode = ( $current_type == 5 || $current_type == 6 ) ? 'disabled ' : '';
 ?>
@@ -475,12 +475,12 @@ this, event, '200px')"><IMG SRC="icons/help.png" border="0" alt="help icon"></a>
 		History Profile<br>
 		<hr class="hrule">
 		<input type="radio" name="profile_type" value="6" <?php echo $current_type == 6 ? 'checked' : ''; ?>> 
-		Continous Profile&nbsp;/&nbsp;shadow<br>
+		Continuous Profile&nbsp;/&nbsp;shadow<br>
 		<input type="radio" name="profile_type" value="5" <?php echo $current_type == 5 ? 'checked' : ''; ?>> 
 		History Profile&nbsp;/&nbsp;shadow<br>
 		<hr class="hrule">
 		<input name="edit" value="Commit new type" type="submit" >
-		<a href="#null" onMouseover="showhint('<b>Continous Profile</b><br>\
+		<a href="#null" onMouseover="showhint('<b>Continuous Profile</b><br>\
 Switching to a continuous profile starts profiling.<br>\
 <b>History Profile</b><br>Switching to a history profile stops profiling.<br> \
 <b>Shadow Profile</b><br>Switching to a shadow profile deletes all profiled netflow data to free disk space. \
@@ -786,7 +786,7 @@ Ex. 72, 72h, 4d 12h, 14days etc. ', this, event, '200px')"><IMG SRC="icons/help.
 		<a href="#null" style="float:right;" onMouseover="showhint('<b>1:1 profile</b><br>\
 This is the classic NfSen profile where each selected input channel maps to a channel in the new profile. \
 All channels in the profile have the same filter.<br>\
-<b>individual channels</b><br>A profile may contain any number of independant channels, \
+<b>individual channels</b><br>A profile may contain any number of independent channels, \
 where each channel has it\'s own filter. The source for each channel can be any number of \
 input channels.', this, event, '200px')"><IMG SRC="icons/help.png" border="0" alt="help icon"></a>
 	</td>
@@ -1226,7 +1226,7 @@ function Process_stat_tab ($tab_changed, $profile_changed) {
 		return;
 	}
 		
-	// edit or add a channel? - process commited form entries
+	// edit or add a channel? - process committed form entries
 	if ( array_key_exists('edit_channel_commit', $_POST )   || array_key_exists('add_channel_commit', $_POST )) {
 
 		if ( array_key_exists('edit_channel_commit', $_POST ) )
@@ -1374,7 +1374,7 @@ function Process_stat_tab ($tab_changed, $profile_changed) {
 		return;
 	}
 
-	// create a new profile - process commited form
+	// create a new profile - process committed form
 	if ( array_key_exists('new_profile_commit', $_POST )) {
 
 		$parse_opts = array( 
@@ -1556,7 +1556,7 @@ function DisplayAdminPage() {
 
 			// setup channel defaults
 			if ( array_key_exists('form_data', $_SESSION ) ) {
-				// add channel contained errors - interate ones more
+				// add channel contained errors - iterate ones more
 				$channel_defaults = $_SESSION['form_data'];
 				unset($_SESSION['form_data']);
 				if ( $channel_defaults['sign'] == '+' ) {

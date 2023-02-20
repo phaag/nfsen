@@ -158,7 +158,7 @@ function ReportLog($message) {
  *	"required" 	=> 1, 						, 0 or 1 must exists in $_POST, must not be NULL
  *	"allow_null"=> 1, 						, 0 or 1 allow value to be NULL
  *	"default"  	=> NULL, 					, if not exists or not defined use this default, maybe NULL
- *	"match" 	=> "/[^A-Za-z0-9\-+_]+/" 	, value must satify this reges, may be NULL
+ *	"match" 	=> "/[^A-Za-z0-9\-+_]+/" 	, value must satisfy this reges, may be NULL
  *	"validate" 	=> NULL),					, additional validate function to call for further processing, may be NULL
  */
 function ParseForm($parse_opts) {

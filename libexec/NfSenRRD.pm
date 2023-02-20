@@ -382,7 +382,7 @@ sub GenDetailsGraph {
 	my $tleft   	= shift @{$detailargs};	# left time of marker - UNIX format; 0 is no marker
 	my $tright  	= shift @{$detailargs};	# right time of marker - UNIX format; 0 is no marker
 	my $width		= shift @{$detailargs};	# width of graph
-	my $heigh		= shift @{$detailargs};	# heigh of graph
+	my $heigh		= shift @{$detailargs};	# height of graph
 	my $light		= shift @{$detailargs};	# light version ( small graphs ) - no title no span window
 	my $logscale	= shift @{$detailargs};	# linear or log y-Axis
 	my $linegraph	= shift @{$detailargs};	# linear or log y-Axis

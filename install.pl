@@ -350,7 +350,7 @@ sub SetupEnv {
 	# Make sure all required directories exist
 
 	umask 0002;
-	print "\nSetup diretories:\n";
+	print "\nSetup directories:\n";
 	my @dirs = (
 		"$NfConf::INSTPREFIX$NfConf::VARDIR",
 		"$NfConf::INSTPREFIX$NfConf::VARDIR/tmp",
@@ -662,10 +662,10 @@ if ( !NfConf::LoadConfig($ConfigFile) ) {
 	exit 1;
 }
 
-# check for extra errornous nfsen.conf file, which may overwrite existing files
+# check for extra erroneous nfsen.conf file, which may overwrite existing files
 if ( -f "$NfConf::CONFDIR/nfsen.conf" && -f "etc/nfsen.conf" &&
 	( (stat($ConfigFile))[1] != (stat("etc/nfsen.conf"))[1] )) {
-	die "Extra nfsen.conf file in etc directory found. Remove errornous file first"
+	die "Extra nfsen.conf file in etc directory found. Remove erroneous file first"
 }
 
 Log::LogInit();

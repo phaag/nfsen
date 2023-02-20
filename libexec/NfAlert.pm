@@ -220,7 +220,7 @@ sub AlertExists {
 } # End of AlertExists
 
 #
-# Returns the alert info hash, if successfull
+# Returns the alert info hash, if successful
 # else returns EmptyAlert and sets Log::ERROR
 sub ReadAlert {
 	my $name  		 = shift;
@@ -819,7 +819,7 @@ sub GetAlertPluginCondition {
 				'alertfile' => $file, 
 				'timeslot' 	=> $t_iso }, \%out_list, { 'timeslot' => $t_iso } );
 		if ( $status =~ /^ERR/ ) {
-			syslog('err', "Failed to get alert condition fom plugin '$plugin': $status");
+			syslog('err', "Failed to get alert condition from plugin '$plugin': $status");
 			$out_list{'condition'} = 0;
 		}
 	} else {
@@ -873,7 +873,7 @@ sub ExecuteAction {
 			MailFrom => $NfConf::MAIL_FROM 
 		);
 
-		# Do we have failed receipients?
+		# Do we have failed recipients?
 		my %_tmp;
 		my @_recv = split /\s*,\s*/, $$alertref{'action_email'};
 		@_tmp{@_recv} = 1;
@@ -1013,7 +1013,7 @@ sub RunPeriodic {
 				my @what_val;
 	
 				# Conditions based on total flow summary:
-				# each conditions compares agains the total flow summary
+				# each conditions compares against the total flow summary
 				# therefore for each condition the same values from last stack
 				if ( $alertinfo{'type'} == 0 ) {
 					$what_val[0] = $$alertstatus{'last'}{'flows'}->[0];

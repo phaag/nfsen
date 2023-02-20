@@ -45,5 +45,5 @@ Replace the default sub END in the plugin by sub Cleanup. This is required as ot
 Perl will call the standard END block, every time a comm service server exits. This
 could cause unexpected results. 
 
-If you are interessted in more details, have a look at the demoplugin.pm in the plugin
+If you are interested in more details, have a look at the demoplugin.pm in the plugin
 directory and look into the Plugin Writers guide in the doc dir.

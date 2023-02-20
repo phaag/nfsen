@@ -8,7 +8,7 @@ included in this contrib directory. ***
 1. Get nfdump. You need at least version 1.6.5 or 1.5.8-NSEL.
 PortTracker does *NOT* work with nfdump-1.5.x!
 
-2. When building nfdump add --enable-nftrack as confgure parameter
+2. When building nfdump add --enable-nftrack as configure parameter
 A command may look like: ./configure --enable-nfprofile --enable-nftrack
 make; make install will generate the binaries incl. nftrack
 

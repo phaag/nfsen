@@ -85,7 +85,7 @@ sub notify {
 		MailFrom => $NfConf::MAIL_FROM 
 	);
 
-	# Do we have failed receipients?
+	# Do we have failed recipients?
 	# build the difference between array @$NfConf::RCPT_TO and @sent_to
 	my %_tmp;
 	my @_recv = split /\*s,\*s/, $rcpt_to;

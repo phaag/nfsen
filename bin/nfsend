@@ -145,7 +145,7 @@ sub daemonize {
 	open STDERR, '>/dev/null' || die "Can't write to /dev/null: $!";
 	defined(my $pid = fork)   || die "Can't fork: $!";
 	if ( $pid ) { 
-		# we are the parent processs
+		# we are the parent process
 		if ( defined $pidfile ) {
 			unlink $pidfile;
 			open PID, ">$pidfile" || die "Can't open pid file: $!\n";
@@ -339,7 +339,7 @@ sub Periodic {
 		}
 
 	} else {
-		syslog('debug', "No continous profiles - nothing to profile");
+		syslog('debug', "No continuous profiles - nothing to profile");
 	}
 
 	# continue with updating RRDs 
@@ -380,7 +380,7 @@ sub Periodic {
 			}
 		
 			# remember if the profile may grow
-			# growing == 0 or continous[/shadow]
+			# growing == 0 or continuous[/shadow]
 			my $growing = $profileinfo{'type'} == 0 || ( $profileinfo{'type'} & 3 ) == 2;
 	
 			syslog('info', "Update profile $profilename in group $profilegroup");
@@ -427,7 +427,7 @@ sub Periodic {
 			# for 'history' profiles
 			$profileinfo{'tend'} = $profileinfo{'updated'} if $growing;
 
-			# keep profile locked, if an error occured
+			# keep profile locked, if an error occurred
 			$profileinfo{'locked'} = 0;
 
 			# Update the graphs if it's a growing profile
@@ -539,7 +539,7 @@ sub ExpireProfiles {
 				next;
 			}
 
-			# continous/shadow profile
+			# continuous/shadow profile
 			if ( $profileinfo{'type'} == 6 ) {
 				if ( $profileinfo{'tstart'} < $live_start ) {
 					$profileinfo{'tstart'} =  $live_start;
@@ -655,7 +655,7 @@ sub LoopLive {
 		Nfsync::semsignal();
 		
 		#
-		# determin, if we need some sleep. If we are done in this cycle
+		# determine, if we need some sleep. If we are done in this cycle
 		# sleep until next timeslot + 15s = 315s
 		# otherwise we are behind time schedule. continue updating the 
 		# profiles until we are on track and can sleep
@@ -690,7 +690,7 @@ sub LoopSim {
 		Nfsync::semsignal();
 		
 		#
-		# determin, if we need some sleep. If we are done in this cycle
+		# determine, if we need some sleep. If we are done in this cycle
 		# sleep until next simulated timeslot
 		# otherwise we are behind time schedule. continue updating the 
 		# profiles until we are on track and can sleep
@@ -744,7 +744,7 @@ syslog("info", "Startup. Version: $nfsen_version $VERSION");
 
 my $arg = shift @ARGV;
 $arg = '' unless defined $arg;
-die "Unknow argument '$arg'" if $arg ne '' && $arg ne 'once';
+die "Unknown argument '$arg'" if $arg ne '' && $arg ne 'once';
 
 if ( !NfSen::DropPriv($NfConf::USER) ) {
 	die "$Log::ERROR\n";

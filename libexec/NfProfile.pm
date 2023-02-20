@@ -616,7 +616,7 @@ print ".Max+: $max_sum_pos at $iso_tpos, Max-: $max_sum_neg at $iso_tneg\n";
 
 
 #
-# Returns the profile info hash, if successfull
+# Returns the profile info hash, if successful
 # else returns EmptyProfile and sets Log::ERROR
 sub ReadProfile {
 	my $name  		 = shift;
@@ -692,7 +692,7 @@ sub ReadProfile {
 	}
 
 	if ( $profileinfo{'name'} ne $name ) {
-		$Log::ERROR = "Corrupt stat file. Needs to be rebuilded";
+		$Log::ERROR = "Corrupt stat file. Needs to be rebuilt";
 		return %empty;
 	}
 
@@ -708,7 +708,7 @@ sub ReadProfile {
 } # End of ReadProfile
 
 #
-# Returns the profile info hash, if successfull
+# Returns the profile info hash, if successful
 # else if already locked, return EmptyProfile with 'locked' = 1
 # else returns EmptyProfile and sets Log::ERROR
 sub LockProfile {
@@ -770,7 +770,7 @@ sub LockProfile {
 	if ( $profileinfo{'name'} ne $name ) {
 		flock ProFILE, LOCK_UN;
 		close ProFILE;
-		$Log::ERROR = "Corrupt stat file. Needs to be rebuilded";
+		$Log::ERROR = "Corrupt stat file. Needs to be rebuilt";
 		return %empty;
 	}
 
@@ -919,7 +919,7 @@ sub ProfileHistory {
 	$arg   .= "-z " if $NfConf::ZIPprofiles;
 
 	# create argument list specific for each channel
-	# at the moment this contains of all channels in a continues profile
+	# at the moment this contains of all channels in a continuous profile
 	my @ProfileOptList;
 	foreach my $channel ( keys %{$$profileref{'channel'}} ) {
 		push @ProfileOptList, "$group#$name#$$profileref{'type'}#$channel#$$profileref{'channel'}{$channel}{'sourcelist'}";
@@ -1351,14 +1351,14 @@ sub DoRebuild {
 		}
 
 		# history data is updated and we are done with history profiles
-		# A continous profile except 'live' must be updated up to the current slot 
+		# A continuous profile except 'live' must be updated up to the current slot 
 		# rebuilding the profile could have missed new slots -> profile missing slots
 		if ( $continous_profile && ($profile ne 'live' || $profilegroup ne '.') ) {
 			# get current current time slot
 			my %liveprofile = ReadProfile('live', '.');
 			$tend = $liveprofile{'tend'};
 
-			# this can happen, if a history profile is switch back to continous
+			# this can happen, if a history profile is switch back to continuous
 			# profile and wants to get updated now. Be sure we have all data
 			if ( $t < $liveprofile{'tstart'} ) {
 				$t = $liveprofile{'tstart'};
@@ -1426,7 +1426,7 @@ sub DoRebuild {
 			}
 		}
 	} else {
-		syslog('info', "Graphs for profile '$profile', group '$profilegroup' not rebuilded");
+		syslog('info', "Graphs for profile '$profile', group '$profilegroup' not rebuilt");
 	}
 
 	if ( $profile eq 'live' && $profilegroup eq '.' ) {
@@ -1671,7 +1671,7 @@ sub AddProfile {
 	my $opts   = shift;
 
 	# both options can be set at the same time
-	my $history_profile	= 0;	# Profile start back in time; needs to be builded
+	my $history_profile	= 0;	# Profile start back in time; needs to be rebuilt
 	my $continuous_profile = 0;	# Profile continuous in time
 	
 	my ($profile, $profilegroup);
@@ -1839,7 +1839,7 @@ sub AddProfile {
 	# the first slot to be updated is 'updated' + $NfConf::CYCLETIME
 	$profileinfo{'updated'}		= $tstart - $NfConf::CYCLETIME;	
 
-	# expiring profiles makes only sense for continous profiles
+	# expiring profiles makes only sense for continuous profiles
 	$profileinfo{'expire'} 		= $continuous_profile ? $lifetime : 0;
 	$profileinfo{'maxsize'} 	= $continuous_profile ? $maxsize : 0;
 
@@ -2410,7 +2410,7 @@ sub CommitProfile {
 			return;
 		}
 		if ( $pid ) { 
-			# we are the parent processs
+			# we are the parent process
 			print $socket "pid=$pid\n";
 			print $socket $EODATA;
 			print $socket "OK Profiling netflow data\n";
@@ -2958,7 +2958,7 @@ sub RebuildProfile {
 		print $socket "ERR $status\n";
 
 	} else {
-		print $socket "OK profile rebuilded\n";
+		print $socket "OK profile rebuilt\n";
 	}
 
 } # End of RebuildProfile
@@ -3442,7 +3442,7 @@ sub CheckProfiles {
 					$profileinfo{'type'} = 1;
 				}
 				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
-				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
+				syslog('err', "Rebuilt profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( -f "$NfConf::PROFILESTATDIR/$profilepath/.CANCELED" ) {
 				syslog('err', "Clean-up debris profile '$profile' in group '$profilegroup' ");
@@ -3454,7 +3454,7 @@ sub CheckProfiles {
 					$profileinfo{'type'} = 1;
 				}
 				my $status = DoRebuild(*STDOUT, \%profileinfo, $profile, $profilegroup, $profilepath, 0, 0);
-				syslog('err', "Rebuilded profile '$profile' in group '$profilegroup': $status ");
+				syslog('err', "Rebuilt profile '$profile' in group '$profilegroup': $status ");
 			}
 			if ( $profileinfo{'locked'} ) {
 				syslog('err', "Clean-up debris profile '$profile' in group '$profilegroup' ");

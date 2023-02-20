@@ -144,7 +144,7 @@ sub ParseMaxsize {
 
 #
 # Tests string for a valid date.
-# Dates are recongized valid between 1.1.1970 00:00 and 19.1.2038 14:14
+# Dates are recognized valid between 1.1.1970 00:00 and 19.1.2038 14:14
 #	The date may include '-' for better readability
 #	Format: yyyymmddHHmm, yyyy-mm-dd-HH-MM
 sub ValidISO {
@@ -211,7 +211,7 @@ sub ISO2UNIX {
 		return 0;
 	}
 
-	$isotime =~ s/\-//g;	# allow '-' to structur time string
+	$isotime =~ s/\-//g;	# allow '-' to structure time string
 
     # 2004 02 13 12 45 /
 	my $sec = 0;
