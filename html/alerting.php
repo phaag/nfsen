@@ -6,7 +6,7 @@ $Cond_ops = array ( 'and', 'or' );
 
 $SumStat_type_options = array ( 
 	'Total flows', 	 'Total packets', 	 'Total bytes',
-	'Flows/s', 'Packages/s', 'bits/s'
+	'flows/s', 'packets/s', 'bits/s'
 );
 
 $SumStat_comp = array ( '&gt;', '&lt;', 'outside' );
