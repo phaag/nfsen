@@ -306,8 +306,9 @@ function UNIX2DISPLAY($time) {
 
 } // End of UNIX2DISPLAY
 
-function ScaleValue ( $value, $rateval ) {
+function ScaleValue ( $val, $rateval ) {
 
+	$value = intval($val);
 	if ( $rateval != 1 ) {
 		$value = $value / $rateval;
 		$rate_label = '/s';	// make bits
