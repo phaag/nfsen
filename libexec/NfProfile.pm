@@ -425,9 +425,9 @@ sub ReadStatInfo {
 	my $err = undef;
 	my $args;
 	if ( defined $tend ) {
-		$args = "-I -R $NfConf::PROFILEDATADIR/$profilepath/$channel/$subdirs/nfcapd.$tstart:nfcapd.$tend";
+		$args = "-I -G none -R $NfConf::PROFILEDATADIR/$profilepath/$channel/$subdirs/nfcapd.$tstart:nfcapd.$tend";
 	} else {
-		$args = "-I -r $NfConf::PROFILEDATADIR/$profilepath/$channel/$subdirs/nfcapd.$tstart";
+		$args = "-I -G none -r $NfConf::PROFILEDATADIR/$profilepath/$channel/$subdirs/nfcapd.$tstart";
 	}
 	local $SIG{CHLD} = 'DEFAULT';
 	if ( !open(NFDUMP, "$NfConf::PREFIX/nfdump $args 2>&1 |") ) {
@@ -557,7 +557,7 @@ sub GetPeakValues {
 
 		my $tiso = NfSen::UNIX2ISO($t);
 		foreach my $ch ( @AllChannels ) {
-			my $args = "-I -r $NfConf::PROFILEDATADIR/$profilepath/$ch/$subdirs/nfcapd.$tiso";
+			my $args = "-I -G none -r $NfConf::PROFILEDATADIR/$profilepath/$ch/$subdirs/nfcapd.$tiso";
 	
 			local $SIG{CHLD} = 'DEFAULT';
 			if ( !open(NFDUMP, "$NfConf::PREFIX/nfdump $args 2>&1 |") ) {

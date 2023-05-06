@@ -55,25 +55,25 @@ sub Lookup {
 
 	my ($ip, $port);
 	# IPv4/port
-	if ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})$/ ) {
+	if ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})/ ) {
 		$ip   = $1;
 		$port = $2;
 		# IPv4 ICMP
-	} elsif ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+\.\d+)$/ ) {
+	} elsif ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+\.\d+)/ ) {
 		$ip   = $1;
 		$port = $2;
 	# IPv4
-	} elsif ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/ ) {
+	} elsif ( $lookup =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/ ) {
 		$ip   = $1;
 		$port = 0;
 	# IPv6/port
-	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)\.(\d{1,5})$/ ) {
+	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)\.(\d{1,5})/ ) {
 		$ip   = $1;
 	# IPv6 ICMP
-	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)\.(\d+\.\d+)$/ ) {
+	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)\.(\d+\.\d+)/ ) {
 		$ip   = $1;
 	# IPv6
-	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)$/ ) {
+	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+)/ ) {
 		$ip   = $1;
 		$port = 0;
 	} elsif ( $lookup =~ /^([0-9a-f]+[0-9a-f:]+\.\.[0-9a-f:]+)/ ) {
