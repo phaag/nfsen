@@ -146,9 +146,9 @@ ReportLog("nfsend EODATA");
 	$error_occured = 0;
 	while ( !$done ) {
 		if ( $is_binary ) 
-			$line = @socket_read($nfsend, 1024, PHP_BINARY_READ);
+			$line = @socket_read($nfsend, 65534, PHP_BINARY_READ);
 		else
-			$line = @socket_read($nfsend, 1024, PHP_NORMAL_READ);
+			$line = @socket_read($nfsend, 65534, PHP_NORMAL_READ);
 
 		if ( $line == FALSE ) {
 			$errno = socket_last_error($nfsend);

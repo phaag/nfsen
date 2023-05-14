@@ -34,6 +34,7 @@ package NfSenRRD;
 use RRDs;
 use Log;
 use NfSen;
+use File::Temp qw/tempfile/;
 use strict;
 use warnings;
 
@@ -280,7 +281,7 @@ sub GenGraph {
 	}
 
 	my $graph_filename = "$NfConf::PROFILESTATDIR/$profiledir/${what}${extension}.png";
-	my ($averages,$xsize,$ysize) = RRDs::graph $graph_filename,
+	my $res = RRDs::graphv $graph_filename,
 		@DEFS,
 		"--imgformat", "PNG",
 		"--title", 			"$title" ,
@@ -447,7 +448,9 @@ sub GenDetailsGraph {
 	}
 
 	my @rrdargs = ();
-	push @rrdargs, "-";	# output graphics to stdout
+	#push @rrdargs, "-";	# output graphics to stdout
+	my (undef,$tmpng) = tempfile('/tmp/NfProfilePNGXXXX',OPEN => 0) or die "Unable to create tempfile";
+        push @rrdargs, $tmpng;  # output graphics to temp file
 
 	foreach my $def ( @DEFS ) {
 		$$profileinfo{'channel'}{$def}{'scale'} = $$profileinfo{'channel'}{$def}{'sign'} eq "-" ? -1 : 1;
@@ -523,6 +526,8 @@ sub GenDetailsGraph {
 		SendFile("$NfConf::HTMLDIR/icons/ErrorGraph.png");
 		return "$ERROR: Arg: '$profile', '$sources', '$proto', '$type', '$pstart', '$tstart', '$tend', '$tleft', '$tright', '$width', '$heigh', '$light', '$logscale', '$linegraph'";
 	} else {
+		SendFile($tmpng);
+                unlink($tmpng);
 		return "ok";
 	}
 
@@ -563,7 +568,9 @@ sub GenAlertGraph {
 	my @DEFS = split ':', $sources;
 	
 	my @rrdargs = ();
-	push @rrdargs, "-";	# output graphics to stdout
+	#push @rrdargs, "-";	# output graphics to stdout
+	my (undef,$tmpng) = tempfile('/tmp/NfProfilePNGXXXX',OPEN => 0) or die "Unable to create tempfile";
+        push @rrdargs, $tmpng;  # output graphics to temp file
 
 	foreach my $def ( @DEFS ) {
 		push @rrdargs, "DEF:data${def}=$NfConf::PROFILESTATDIR/~$alertname/avg-$type.rrd:${def}:AVERAGE";
@@ -600,6 +607,8 @@ sub GenAlertGraph {
 		SendFile("$NfConf::HTMLDIR/icons/ErrorGraph.png");
 		return "ERR failed $ERROR";
 	} else {
+		SendFile($tmpng);
+                unlink($tmpng);
 		return "ok";
 	}
 
