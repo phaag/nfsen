@@ -130,7 +130,7 @@ function CompileCommand($mode) {
 		// sort the flows from all sources
 		$args .= $process_form['timesorted'] == 'checked' ? " -m" : '';
 		// list this number of flows
-		$args .= " -n " . $ListNOption[$process_form['listN']];
+		$args .= " -c " . $ListNOption[$process_form['listN']];
 	}
 
 	// process stat request
