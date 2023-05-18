@@ -1150,7 +1150,7 @@ function DisplayDetails () {
 		foreach ( array( '', '_tcp', '_udp', '_icmp', '_other' ) as $_type ) {
 			if ( $statinfo ) {
 				$_val = ScaleValue($statinfo['flows' . $_type], $rateval);
-				$flows_sum[$_type] += $statinfo['flows' . $_type];
+				$flows_sum[$_type] += intval($statinfo['flows' . $_type]);
 			} else {
 				$_val = $mark_char;
 			}
