@@ -916,7 +916,7 @@ sub ProfileHistory {
 	my $profilepath = ProfilePath($name, $group);
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
 	my $arg = "-I -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
-	$arg   .= "-z " if $NfConf::ZIPprofiles;
+	$arg   .= "-y " if $NfConf::ZIPprofiles;
 
 	# create argument list specific for each channel
 	# at the moment this contains of all channels in a continuous profile
