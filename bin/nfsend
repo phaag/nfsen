@@ -287,8 +287,7 @@ sub Periodic {
 		# Build optional arguments for nfprofile in stdin
 		my $channellist  = join ':', keys %{$profileinfo{'channel'}};
 		my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
-		my $arg = "-I -t $timeslot -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout $NfConf::NFPROFILEOPTS ";
-		$arg   .= "-y " if $NfConf::ZIPprofiles;
+		my $arg = "-I -t $timeslot $NfConf::ZIPprofiles -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout $NfConf::NFPROFILEOPTS ";
 		my $flist = "-L $NfConf::syslog_facility -M $NfConf::PROFILEDATADIR/live/$channellist -r nfcapd.$t_iso";
 
 		my @profilers;

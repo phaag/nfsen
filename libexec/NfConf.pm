@@ -229,6 +229,13 @@ sub LoadConfig {
 	}
 	$GID = $gid;
 
+	if ( !defined $ZIPprofiles ) {
+		$ZIPprofiles = "";
+	}
+
+	if ( $ZIPprofiles == 1 ) {
+		$ZIPprofiles = "-z=lz4";
+	}
 
 	$Log::ERROR = undef ;
 	return 1;
