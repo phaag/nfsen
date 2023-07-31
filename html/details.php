@@ -466,8 +466,8 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 		"DefaultFilter" => array( "required" => 0, 
 							  	  "default"  => -1,
 							  	  "allow_null" => 0,
-							  	  "match" => array_merge ( 
-										array(-1), array_keys($_SESSION['DefaultFilters'])),
+							  	  "match" => array_merge( array(-1),
+										array_key_exists('DefaultFilters', $_SESSION) ? $_SESSION['DefaultFilters'] : array()),
 							  	  "validate" => NULL),
 		"filter"		=> array( "required" => 0, 
 							  	  "default"  => array_key_exists('filter', $process_form) ? 
