@@ -265,7 +265,7 @@ sub RunNfdump {
 		return;
 	}
 
-	if ( $args =~ /[^\s!-~\n]+/ || $args =~ /['"`;\\]/ ) {
+	if ( $args =~ /[^\s!-~\n]+/ || ($args =~ /['"`;\\]/ && $args !~ /fmt:/) ) {
 		print $socket $EODATA;
 		print $socket "ERR Illegal characters in argument list\n";
 		return;

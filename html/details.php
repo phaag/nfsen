@@ -581,16 +581,10 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 							  	  "allow_null" => 1,
 							  	  "match" => "/^$|^[\s!-~]+$/",
 							  	  "validate" => NULL),
-		"fmt_save" 		=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('fmt_save', $process_form) ?
-										$process_form['fmt_save'] : '',
-							  	  "allow_null" => 0,
-							  	  "match" => "/^$|^[A-Za-z0-9\.][A-Za-z0-9\-+_\/]+$/" , 
-							  	  "validate" => NULL),
-		"fmt_delete" 	=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('fmt_delete', $process_form) ?
-										$process_form['fmt_delete'] : '',
-							  	  "allow_null" => 0,
+		"fmt_name" 		=> array( "required" => 0, 
+							  	  "default"  => array_key_exists('fmt_name', $process_form) ?
+										$process_form['fmt_name'] : '',
+							  	  "allow_null" => 1,
 							  	  "match" => "/^$|^[A-Za-z0-9\.][A-Za-z0-9\-+_\/]+$/" , 
 							  	  "validate" => NULL),
 		// stat type inputs
@@ -650,19 +644,19 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 		return;
 
 
-	if ( array_key_exists('fmt_save', $_POST) ) {
+		if ( array_key_exists('fmt_save_x', $_POST) && (array_key_exists('fmt_name', $_POST) && $_POST['fmt_name'] != '')) {
  		$cmd_opts['formatdef'] = $process_form['customfmt'];
-		$cmd_opts['format'] = $process_form['fmt_save'];
+		$cmd_opts['format'] = $process_form['fmt_name'];
 		$cmd_opts['overwrite'] = 1;
 		$cmd_out = nfsend_query("add-format", $cmd_opts, 0);
 		if ( is_array($cmd_out) ) {
 			unset($_SESSION['formatlist']);
-			$_SESSION['process_form']['output'] = $process_form['fmt_save'];
+			$_SESSION['process_form']['output'] = $process_form['fmt_name'];
 		}
 	} 
 
-	if ( array_key_exists('fmt_delete', $_POST) ) {
-		$_tmp = $_POST['fmt_delete'];
+	if ( array_key_exists('fmt_delete_x', $_POST) && (array_key_exists('fmt_name', $_POST) && $_POST['fmt_name'] != '') ) {
+		$_tmp = $_POST['fmt_name'];
 		if ( array_key_exists($_tmp, $OutputFormatOption)) {
 			SetMessage('error', "Can not delete built in format '$_tmp'");
 		} else if ( !array_key_exists($_tmp, $_SESSION['formatlist'])) {
@@ -1623,6 +1617,7 @@ function DisplayProcessing() {
 					<input type="image" name="fmt_save" id="fmt_save" title="Save format" 
 						onClick="SaveOutputFormat()" 
 						value="" src="icons/save.png">
+				  <input type="hidden" name="fmt_name" id="fmt_name" value="">
 					<input type="image" name="fmt_delete" id="fmt_delete" title="Delete format" 
 						onClick="DeleteOutputFormat()" 
 						value="" src="icons/trash.png" <?php echo $edit_display_style; ?>>
