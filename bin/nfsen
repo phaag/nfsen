@@ -65,7 +65,7 @@ use Nfcomm;
 use Log;
 
 my $VERSION = 'nfsen 2022 peter';
-my $nfsen_version = "1.3.9";
+my $nfsen_version = "1.3.10";
 
 our $child_exit = 0;
 my $unit = 'nfsen';
