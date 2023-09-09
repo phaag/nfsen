@@ -238,6 +238,10 @@ sub LoadConfig {
 		$ZIPprofiles = "-z=lz4";
 	}
 
+	if ( looks_like_number($ZIPcollected)) {
+		$ZIPcollected = "-z=lz4";
+	}
+
 	$Log::ERROR = undef ;
 	return 1;
 

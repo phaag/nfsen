@@ -95,7 +95,7 @@ sub StartCollector {
 		return;
 	}
 
-	my $ziparg = $NfConf::ZIPcollected ? '-y' : '';
+	my $ziparg = $NfConf::ZIPcollected;
 	if ( defined $NfConf::CYCLETIME ) {
 		$twin = "-t " . $NfConf::CYCLETIME;
 	}
