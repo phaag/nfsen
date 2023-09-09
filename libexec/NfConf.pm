@@ -37,6 +37,7 @@ package NfConf;
 
 use strict;
 use Log;
+use Scalar::Util qw(looks_like_number);
 
 our $BASEDIR;
 our $BINDIR;
@@ -233,7 +234,7 @@ sub LoadConfig {
 		$ZIPprofiles = "";
 	}
 
-	if ( $ZIPprofiles == 1 ) {
+	if ( looks_like_number($ZIPprofiles)) {
 		$ZIPprofiles = "-z=lz4";
 	}
 
