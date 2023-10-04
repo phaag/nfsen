@@ -43,6 +43,7 @@ use POSIX ":sys_wait_h";
 use POSIX 'strftime';
 use Mail::Header;
 use Mail::Internet;
+use Email::Date::Format qw(email_date);
 
 use NfSen;
 use NfSenRRD;
@@ -837,6 +838,7 @@ sub ExecuteAction {
 	my $alertref 	= shift;
 	my $alertstatus	= shift;
 	my $timeslot	= shift;
+	my $email_date = email_date;
 
 	# send email 
 	if ( ($$alertref{'action_type'} & 1) > 0 ) {
@@ -845,6 +847,7 @@ sub ExecuteAction {
 		my @header = ( 	
 			"From: $NfConf::MAIL_FROM",
 			"To: $$alertref{'action_email'}",
+			"Date: $email_date",
 			"Subject: $$alertref{'action_subject'}" 
 		);
 
