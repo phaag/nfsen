@@ -42,7 +42,7 @@ use Sys::Syslog;
 
 use Mail::Header;
 use Mail::Internet;
-use Email::Date::Format qw(email_date);
+use Date::Format qw(time2str);
 
 # What we export
 
@@ -61,7 +61,7 @@ sub notify {
 	my $subject   = shift;
 	my $body_ref  = shift;
 	my $rcpt_to = $NfConf::RCPT_TO ;
-	my $email_date = email_date;
+	my $email_date = time2str('%a, %d %b %Y %H:%M:%S %z', time);
 	if ( scalar @_ == 1 ) {
 		$rcpt_to = shift;
 	}
