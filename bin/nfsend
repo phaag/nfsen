@@ -56,7 +56,7 @@ use Nfsync;
 use Log;
 
 my $VERSION = 'nfsend 2022 peter';
-my $nfsen_version = "1.3.10";
+my $nfsen_version = "1.3.11";
 
 my $forever = 1;
 my $reload  = 0;

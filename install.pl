@@ -49,7 +49,7 @@ use File::Path;
 use RRDconvertv1;
 
 my $VERSION = 'install.pl 2022-12-19';
-my $nfsen_version = "1.3.10";
+my $nfsen_version = "1.3.11";
 
 my @ProfileTag = ( 
 	"# \n",

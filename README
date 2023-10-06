@@ -1,8 +1,8 @@
 Notes:
 ======
 
-This is version 1.3.10 of NfSen. It is a compatibility version for
-new nfdump-1.7.x. NfSen 1.3.10 works with nfdump 1.6.20 and later
+This is version 1.3.11 of NfSen. It is a compatibility version for
+new nfdump-1.7.x. NfSen 1.3.11 works with nfdump 1.6.20 and later
 as well with nfdump-1.7.x.
 Do not use any earlier nfdump version < 1.6.20 as well as nfdump 1.5.x
 
@@ -12,7 +12,7 @@ data, collected with nfdump-1.6.x does not work. Profiling works for
 all data version 2 from nfdump-1.7.
 Update: 1. Update nfdump - 2. Update nfsen. The order is important.
 
-nfsen-1.3.10 is php 8.1 ready.
+nfsen-1.3.11 is php 8.1 ready.
 
 NOTE: *nfsen is no longer under development*
 
