@@ -915,7 +915,7 @@ sub ProfileHistory {
 
 	my $profilepath = ProfilePath($name, $group);
 	my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
-	my $arg = "-I -p $NfConf::ZIPprofiles $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
+	my $arg = "-I $NfConf::ZIPprofiles -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
 
 	# create argument list specific for each channel
 	# at the moment this contains of all channels in a continuous profile
@@ -1371,7 +1371,7 @@ sub DoRebuild {
 			}
 			my $channellist = join ':', keys %{$liveprofile{'channel'}};
 			my $subdirlayout = $NfConf::SUBDIRLAYOUT ? "-S $NfConf::SUBDIRLAYOUT" : "";
-			my $arg = "-I -p $NfConf::ZIPprofiles $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
+			my $arg = "-I $NfConf::ZIPprofiles -p $NfConf::PROFILEDATADIR -P $NfConf::PROFILESTATDIR $subdirlayout ";
 
 			# profile missing slots
 			if ( $t <= $tend ) {

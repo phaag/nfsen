@@ -149,8 +149,8 @@ sub LoadConfig {
 	$MAIL_BODY		 = q{Alert '@alert@' triggered at timeslot @timeslot@};
 	$SMTP_SERVER	 = '';
 
-	$ZIPcollected	 = 1;
-	$ZIPprofiles	 = 1;
+	$ZIPcollected	 = "-z=lz4";
+	$ZIPprofiles	 = "-z=lz4";
 	$InterruptExpire = 0;
 
 	$NFPROFILEOPTS	 = '';
@@ -232,13 +232,15 @@ sub LoadConfig {
 
 	if ( !defined $ZIPprofiles ) {
 		$ZIPprofiles = "";
-	}
-
-	if ( looks_like_number($ZIPprofiles)) {
+	} elsif ( looks_like_number($ZIPprofiles)) {
+		# in case $ZIPprofiles = 1;
 		$ZIPprofiles = "-z=lz4";
 	}
 
-	if ( looks_like_number($ZIPcollected)) {
+	if ( !defined $ZIPcollected ) {
+		$ZIPcollected = "";
+	} elsif ( looks_like_number($ZIPcollected)) {
+		# in case $ZIPcollected = 1;
 		$ZIPcollected = "-z=lz4";
 	}
 
