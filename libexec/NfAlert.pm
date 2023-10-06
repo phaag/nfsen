@@ -43,7 +43,7 @@ use POSIX ":sys_wait_h";
 use POSIX 'strftime';
 use Mail::Header;
 use Mail::Internet;
-use Email::Date::Format qw(email_date);
+use Date::Format qw(time2str);
 
 use NfSen;
 use NfSenRRD;
@@ -834,11 +834,11 @@ sub GetAlertPluginCondition {
 } # End of GetAlertPluginCondition
 
 sub ExecuteAction {
-	my $alert		= shift;
+	my $alert	= shift;
 	my $alertref 	= shift;
 	my $alertstatus	= shift;
 	my $timeslot	= shift;
-	my $email_date = email_date;
+	my $email_date  = time2str('%a, %d %b %Y %H:%M:%S %z', time);
 
 	# send email 
 	if ( ($$alertref{'action_type'} & 1) > 0 ) {
