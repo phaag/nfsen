@@ -633,6 +633,7 @@ eval {
 	use RRDs;
 	use Mail::Header;
 	use Mail::Internet;
+	use Date::Format;
 	use Socket6 qw(inet_pton);
 };
 if ( $@ ) {
