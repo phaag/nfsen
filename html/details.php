@@ -34,6 +34,7 @@ $IPStatOption = array ( 'Flow Records',
 						'Any VLAN ID', 'SRC VLAN ID', 'DST VLAN ID',  
 						'SRC MAC', 'DST MAC', 'IN MAC', 'OUT MAC',
 						'IN SRC MAC', 'OUT DST MAC', 'IN DST MAC', 'OUT SRC MAC',
+						'Geo', 'Src Geo', 'Dst Geo',
 						'MPLS Label 1', 'MPLS Label 2', 'MPLS Label 3', 'MPLS Label 4', 'MPLS Label 5', 'MPLS Label 6', 'MPLS Label 7', 'MPLS Label 8', 'MPLS Label 9', 'MPLS Label 10'
 					);
 
@@ -48,15 +49,15 @@ $IPStatArg	  = array ( '-s record',
 						'-s mask',   '-s srcmask','-s dstmask',
 						'-s vlan',   '-s srcvlan','-s dstvlan',
 						'-s srcmac', '-s dstmac', '-s inmac', '-s outmac',
-						'-s insrcmac',   '-s outdstmac','-s indstmac', '-s outsrcmac',
+						'-s insrcmac', '-s outdstmac','-s indstmac', '-s outsrcmac',
+						'-s geo', '-s srcgeo', '-s dstgeo',
 						'-s mpls1', '-s mpls2', '-s mpls3', '-s mpls4', '-s mpls5', '-s mpls6', '-s mpls7', '-s mpls8', '-s mpls9', '-s mpls10',
 					);
 
 $IPStatOrder  = array ( 'flows', 'packets', 'bytes', 'pps', 'bps', 'bpp' );
 $LimitScale	  = array ( '-', 'K', 'M', 'G', 'T' );
 
-$OutputFormatOption = array ( 'auto', 'line', 'long', 'extended');
-
+$OutputFormatOption = array ( 'auto', 'line', 'gline', 'long', 'glong', 'extended', 'csv' );
 
 function TimeSlotUpdate ($detail_opts) {
 
