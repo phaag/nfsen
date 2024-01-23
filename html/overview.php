@@ -54,13 +54,13 @@ function DisplayGraphs ($type) {
 	}
 
 	$profileswitch = "$profilegroup/$profile";
-	print "<a href='$self?tab=2&win=day&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file=${type}-day' width='669' height='281' border='0'></a>\n";
+	print "<a href='$self?tab=2&win=day&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file={$type}-day' width='669' height='281' border='0'></a>\n";
 	print "<br>";
-	print "<a href='$self?tab=2&win=week&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file=${type}-week' width='669' height='281' border='0'></a>\n";
+	print "<a href='$self?tab=2&win=week&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file={$type}-week' width='669' height='281' border='0'></a>\n";
 	print "<br>";
-	print "<a href='$self?tab=2&win=month&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file=${type}-month' width='669' height='281' border='0'></a>\n";
+	print "<a href='$self?tab=2&win=month&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file={$type}-month' width='669' height='281' border='0'></a>\n";
 	print "<br>";
-	print "<a href='$self?tab=2&win=year&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file=${type}-year' width='669' height='281' border='0'></a>\n";
+	print "<a href='$self?tab=2&win=year&type=$type'> <IMG src='pic.php?profileswitch=$profileswitch&amp;file={$type}-year' width='669' height='281' border='0'></a>\n";
 	print "<br>";
 
 } # End of DisplayHistory
