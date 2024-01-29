@@ -341,7 +341,7 @@ function ScaleValue ( $val, $rateval ) {
 	if ( $scaled > 0 )
 		$str = sprintf("%5.1f %s%s", $scaled, $unit, $rate_label);
 	else
-		$str = "$value ${unit}${rate_label}";
+		$str = "$value {$unit}{$rate_label}";
 
 	return preg_replace("/^\s+/", "", $str);
 	
@@ -386,7 +386,7 @@ function ScaleBytes ( $value, $rateval, $bs ) {
 	if ( $scaled > 0 )
 		$str = sprintf("%5.1f %s%s%s", $scaled, $unit, $Bit_Byte, $rate_label);
 	else
-		$str = "$value ${unit}${Bit_Byte}${rate_label}";
+		$str = "$value {$unit}{$Bit_Byte}{$rate_label}";
 
 	return preg_replace("/^\s+/", "", $str);
 	

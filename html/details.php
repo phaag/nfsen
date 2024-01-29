@@ -811,9 +811,9 @@ function DisplayDetails () {
 		$d_ext = $d == 1 ? '' : 's';
 		$h_ext = $h == 1 ? '' : 's';
 		if ( $d ) {
-			$expire = "$d day${d_ext} $h hour{$h_ext}";
+			$expire = "$d day{$d_ext} $h hour{$h_ext}";
 		} else {
-			$expire = "$h hour${h_ext}";
+			$expire = "$h hour{$h_ext}";
 		}
 	}
 
