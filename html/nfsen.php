@@ -365,7 +365,7 @@ function filter_validate(&$filter, $opts) {
 
 function description_validate(&$description, $opts) {
 
-	$_tmp = preg_replace("/\r/", '', $description);
+	$_tmp = preg_replace("/\r/", '', $description ?? '');
 	$description = addslashes($_tmp);
 	$description = explode("\n", $description);
 	return 0;

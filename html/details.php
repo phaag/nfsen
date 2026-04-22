@@ -1614,7 +1614,7 @@ function DisplayProcessing() {
 					<span id="fmt_edit" <?php echo $fmt_edit_display_style?>>
 					<br>Enter custom output format:<br>
 					<input size="30" type="text" name="customfmt" id="customfmt" 
-						value="<?php echo htmlspecialchars(stripslashes($process_form['customfmt']));?>" >
+						value="<?php echo htmlspecialchars(stripslashes($process_form['customfmt'] ?? ''));?>" >
 					<input type="image" name="fmt_save" id="fmt_save" title="Save format" 
 						onClick="SaveOutputFormat()" 
 						value="" src="icons/save.png">
