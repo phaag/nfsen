@@ -824,4 +824,25 @@ sub StoreHints {
 
 } # End of StoreAlertStatus
 
+# Minor version of the installed nfdump toolset, as detected by install.pl
+# ('nfdump -V' -> $$hints{'nfdump'}), or 0 if unknown/not yet installed.
+sub NfdumpVersion {
+	return defined $$hints{'nfdump'} ? $$hints{'nfdump'} : 0;
+} # End of NfdumpVersion
+
+# Command line flags nfexpire needs to stay NfSen-compatible:
+# '-p' (legacy NfSen profile mode: treat datadir as a profile made up of
+#       several channel subdirs) and '-Y' (print the 'Stat|size|first|last'
+#       summary line NfProfile.pm/nfsend parse, and write the legacy
+#       per-channel '.nfstat' file NfProfile::ReadChannelStat reads).
+# Both switches, and the file formats they produce, were verified against
+# a live nfdump 1.8.x (devel_1.8.x) nfexpire binary on 2026-08-22, and have
+# been present and unchanged back to nfdump 1.6.x - so there is currently
+# no version to branch on. Routing all nfexpire callers through this one
+# function still guarantees '-Y' is used against 1.8.x, and gives a single
+# place to special-case a future nfdump version that changes this.
+sub NfexpireCompatArgs {
+	return "-Y -p";
+} # End of NfexpireCompatArgs
+
 1;

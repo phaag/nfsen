@@ -84,7 +84,6 @@ function CompileCommand($mode) {
 	global $IPStatOption;
 	global $IPStatOrder;
 	global $IPStatArg;
-	global $LimitScale;
 	global $OutputFormatArg;
 
 	$process_form = $_SESSION['process_form'] ;
@@ -147,17 +146,7 @@ function CompileCommand($mode) {
 		}
 		// IPv6 long listing
 		$args .= $process_form['IPv6_long'] == 'checked' ? " -6" : '';
-
-		// limits -L/-l
-		if ( $process_form['limitoutput'] == 'checked' ) {
-			$args .= $process_form['limitwhat'] == 1 ? " -L " : " -l ";
-			if ( $process_form['limithow'] == 1 )
-				$args .= '-';
-			$args .= $process_form['limitsize'];
-			if ( $process_form['limitscale'] > 0 )
-				$args .= $LimitScale[$process_form['limitscale']];
-		}
-	} 
+	}
 
 	return "$args";
 

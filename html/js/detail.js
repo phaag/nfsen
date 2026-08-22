@@ -488,7 +488,7 @@ function ValidateProcessForm() {
 
 function SwitchOptionTable(index) {
 	var ListItems = new Array("listN", "timesorted");
-	var StatItems = new Array("topN", "stattype", "limitoutput");
+	var StatItems = new Array("topN", "stattype");
 
 	// common rows : Aggregate, output
 
@@ -831,11 +831,6 @@ function ResetProcessingForm() {
 		document.getElementById("StatTypeSelector").selectedIndex = 0;
 		document.getElementById("statorder").selectedIndex = 0;
 		PresetAggregate(0);
-		document.getElementById("limitoutput").checked = 0;
-		document.getElementById("limitwhat").selectedIndex = 0;
-		document.getElementById("limithow").selectedIndex = 0;
-		document.getElementById("limitscale").selectedIndex = 0;
-		document.getElementById("limitsize").value = 0;
 	}
 	document.getElementById("output").selectedIndex = 0;
 	document.getElementById("IPv6_long").checked = 0;

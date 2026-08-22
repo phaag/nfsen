@@ -55,7 +55,6 @@ $IPStatArg	  = array ( '-s record',
 					);
 
 $IPStatOrder  = array ( 'flows', 'packets', 'bytes', 'pps', 'bps', 'bpp' );
-$LimitScale	  = array ( '-', 'K', 'M', 'G', 'T' );
 
 $OutputFormatOption = array ( 'auto', 'line', 'gline', 'long', 'glong', 'extended', 'csv' );
 
@@ -273,7 +272,6 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 	global $IPStatOption;
 	global $IPStatOrder;
 	global $WinSizeScale;
-	global $LimitScale;
 	global $OutputFormatOption;
 
 	$_SESSION['refresh'] = 0;
@@ -607,37 +605,6 @@ function Process_Details_tab ($tab_changed, $profile_changed) {
 							  	  "allow_null" => 0,
 							  	  "match" => range(0, count($IPStatOrder)-1) , 
 							  	  "validate" => NULL),
-		"limitoutput" 	=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('limitoutput', $process_form) ?
-										$process_form['limitoutput'] : '',
-							  	  "allow_null" => 0,
-							  	  "match" => array( '', 'checked' ),
-							  	  "validate" => NULL),
-		"limitwhat" 	=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('limitwhat', $process_form) ?
-										$process_form['limitwhat'] : 0,
-							  	  "allow_null" => 0,
-							  	  "match" => array( 0, 1),
-							  	  "validate" => NULL),
-		"limithow" 		=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('limithow', $process_form) ?
-										$process_form['limithow'] : 0,
-							  	  "allow_null" => 0,
-							  	  "match" => array( 0, 1),
-							  	  "validate" => NULL),
-		"limitsize" 	=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('limitsize', $process_form) ?
-										$process_form['limitsize'] : 0,
-							  	  "allow_null" => 0,
-							  	  "match" => "/^[0-9]+$/" , 
-							  	  "validate" => NULL),
-		"limitscale" 	=> array( "required" => 0, 
-							  	  "default"  => array_key_exists('limitscale', $process_form) ?
-										$process_form['limitscale'] : 0,
-							  	  "allow_null" => 0,
-							  	  "match" => range(0, count($LimitScale)-1) , 
-							  	  "validate" => NULL),
-
 	);
 	list ($process_form, $has_errors) = ParseForm($parse_opts);
 	$_SESSION['process_form'] = $process_form;
@@ -1341,7 +1308,6 @@ function DisplayProcessing() {
 	global $OutputFormatOption;
 	global $IPStatOption;
 	global $IPStatOrder;
-	global $LimitScale;
 
 	$detail_opts = $_SESSION['detail_opts'];
 	$process_form = $_SESSION['process_form'];
@@ -1535,45 +1501,6 @@ function DisplayProcessing() {
 						style="margin-left:1" <?php echo $process_form['timesorted'];?>>
 					start time of flows</td>
 			</tr>
-			<tr id="limitoutputRow" <?php echo $stat_display_style;?>>
-				<td class='TDnfprocLabel'>Limit:</td>
-				<td class='TDnfprocControl'>
-					<input type="checkbox" name="limitoutput" id="limitoutput" value="checked" style="margin-left:1" 
-						size="1" <?php echo $process_form['limitoutput'];?>>
-					<select name="limitwhat" id="limitwhat" size="1">
-<?php
-					$i = 0;
-					foreach ( array('Packets', 'Traffic') as $s ) {
-						$checked = $process_form['limitwhat'] == $i ? 'selected' : '';
-						print "<option value='$i' $checked>$s</option>\n";
-						$i++;
-					}
-?>
-					</select>
-					<select name="limithow" id="limithow" size="1">
-<?php
-					$i = 0;
-					foreach ( array('&gt;', '&lt;') as $s ) {
-						$checked = $process_form['limithow'] == $i ? 'selected' : '';
-						print "<option value='$i' $checked>$s</option>\n";
-						$i++;
-					}
-?>
-					</select>
-					<input type="text" name="limitsize" id="limitsize" value="<?php echo $process_form['limitsize']; ?>" SIZE="6" MAXLENGTH="8">
-					<select name="limitscale" id="limitscale" size="1" style="margin-left:1">
-<?php
-					$i = 0;
-					foreach ( $LimitScale as $s ) {
-						$checked = $process_form['limitscale'] == $i ? 'selected' : '';
-						print "<option value='$i' $checked>$s</option>\n";
-						$i++;
-					}
-?>
-					</select>
-				</td>
-			</tr>
-
 			<tr id="outputRow">
 				<td class='TDnfprocLabel'>Output:</td>
 				<td class='TDnfprocControl'>

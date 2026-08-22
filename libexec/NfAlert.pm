@@ -709,12 +709,17 @@ sub GetTop1Stat {
 
 	my $file = "$NfConf::PROFILEDATADIR/~$alert/$alert/nfcapd.$t_iso";
 
-	my @StatType = ( 
-		'ip', 'srcip', 'dstip', 'port', 'srcport', 'dstport', 
+	my @StatType = (
+		'ip', 'srcip', 'dstip', 'port', 'srcport', 'dstport',
 		'as', 'srcas', 'dstas', 'if', 'inif', 'outif', 'proto'
 	);
 
 	my @StatOrderBy = ( 'flows', 'packets', 'bytes', 'pps', 'bps', 'bpp');
+
+	# nfdump >= 1.8 dropped the '-o pipe' output format entirely.
+	if ( NfSen::NfdumpVersion() >= 8 ) {
+		return GetTop1StatV8($file, $conditions, \@StatType, \@StatOrderBy);
+	}
 
 	my $stat = '';
 	# prepare for each condition the required -s argument for nfdump
@@ -798,10 +803,84 @@ sub GetTop1Stat {
 
 	# the last array is an empty one - discard
 	pop @{$statinfo};
-	
+
 	return $statinfo;
 
 } # End of GetTop1Stat
+
+# nfdump >= 1.8: '-o pipe' is gone, replaced by a custom '-o fmt:' format.
+# The old pipe format's blank line marked the end of each '-s' block, which
+# also let a block with zero matching flows still line up with the right
+# condition index. The new fmt/csv output modes print nothing at all for
+# an empty block, so there is no separator to detect. Query each condition
+# with its own nfdump call instead - one line in, one $statinfo slot out,
+# no block alignment to get wrong.
+sub GetTop1StatV8 {
+	my $file		= shift;
+	my $conditions	= shift;
+	my $StatType	= shift;
+	my $StatOrderBy	= shift;
+
+	# raw (non-scaled) numbers for flows/packets/bytes/pps/bps/bpp - the
+	# only fields GetAlertCondition ever reads out of $statinfo.
+	my $fmt = "fmt:%fl|%pkt|%byt|%pps|%bps|%bpp";
+
+	my $child_exit = 0;
+	local $SIG{CHLD} = sub {
+   		while ((my $waitedpid = waitpid(-1,WNOHANG)) > 0) {
+       		$child_exit = $?;
+       		my $exit_value  = $child_exit >> 8;
+       		my $signal_num  = $child_exit & 127;
+       		my $dumped_core = $child_exit & 128;
+       		if ( $exit_value || $signal_num || $dumped_core ) {
+           		syslog('err', "Alert Top 1 calculation failed: exit nfdump[$waitedpid] Exit: $exit_value, Signal: $signal_num, Core: $dumped_core");
+       		}
+   		}
+	};
+	local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfdump"); };
+
+	my $statinfo;
+	my $i = 0;
+	foreach my $condition ( @{$conditions} ) {
+		my($op,$type,$comp,$comp_type,$stat_type,$comp_value,$scale) = split /:/, $condition;
+		my $stat = "-s $$StatType[$stat_type]/$$StatOrderBy[$type]";
+
+		$$statinfo[$i]{'flows'}   = 0;
+		$$statinfo[$i]{'packets'} = 0;
+		$$statinfo[$i]{'bytes'}   = 0;
+		$$statinfo[$i]{'pps'}     = 0;
+		$$statinfo[$i]{'bps'}     = 0;
+		$$statinfo[$i]{'bpp'}     = 0;
+
+		if ( open NFDUMP, "$NfConf::PREFIX/nfdump -r $file -o '$fmt' -N -q -n 1 $stat 2>&1|" ) {
+			my $line = <NFDUMP>;
+			close NFDUMP;    # SIGCHLD sets $child_exit
+			if ( defined $line ) {
+				chomp $line;
+				my ($flows, $packets, $bytes, $pps, $bps, $bpp) = split /\|/, $line;
+				if ( defined $bpp ) {
+					$$statinfo[$i]{'flows'}   = $flows;
+					$$statinfo[$i]{'packets'} = $packets;
+					$$statinfo[$i]{'bytes'}   = $bytes;
+					$$statinfo[$i]{'pps'}     = $pps;
+					$$statinfo[$i]{'bps'}     = $bps;
+					$$statinfo[$i]{'bpp'}     = $bpp;
+				} else {
+					syslog('err', "Unexpected nfdump line: '$line'\n");
+				}
+			}
+		}
+
+		if ( $child_exit != 0 ) {
+			syslog('err', "nfdump failed:\n");
+			return undef;
+		}
+		$i++;
+	}
+
+	return $statinfo;
+
+} # End of GetTop1StatV8
 
 sub GetAlertPluginCondition {
 	my $alert 	   = shift;

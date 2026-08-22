@@ -118,7 +118,9 @@ sub StartCollector {
 		my $ident = shift @SourceList;
 		my $profiledir	= "$NfConf::PROFILEDATADIR/live/$ident";
 		$optargs     = exists $NfConf::sources{$ident}{'optarg'} ? $NfConf::sources{$ident}{'optarg'} : '';
-		$src_args = $nfdump_version == 7 ? "-I $ident -w $profiledir" : "-I $ident -l $profiledir ";
+		# nfcapd's '-l' switch changed meaning in 1.7.0 (write dir -> launch process);
+		# '-w' is the write-dir flag from 1.7.0 onwards, unchanged through 1.8.x.
+		$src_args = $nfdump_version >= 7 ? "-I $ident -w $profiledir" : "-I $ident -l $profiledir ";
 	}
 
 	my $args = "$common_args $src_args $optargs";

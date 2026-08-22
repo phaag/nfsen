@@ -583,7 +583,7 @@ sub ExpireProfiles {
 			my $tend			= $profileinfo{'tend'};
 			my $profilesize 	= $profileinfo{'size'};
 	
-			my $args = "-Y -p -e $NfConf::PROFILEDATADIR/$profilegroup/$profilename -w $NfConf::low_water $NfConf::NFEXPIREOPTS ";
+			my $args = NfSen::NfexpireCompatArgs() . " -e $NfConf::PROFILEDATADIR/$profilegroup/$profilename -w $NfConf::low_water $NfConf::NFEXPIREOPTS ";
 			$args .= "-s $profileinfo{'maxsize'} " if $profileinfo{'maxsize'};
 			# prepare arg for nfexpire - experimental! not yet enabled
 			$args .= "-T $left " if $NfConf::InterruptExpire;

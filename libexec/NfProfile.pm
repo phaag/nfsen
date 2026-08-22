@@ -1206,7 +1206,7 @@ sub DoRebuild {
 	my $profilesize = 0;
 	my $tstart		= 0;
 	my $tend		= 0;
-	my $args = "-Y -p -r $NfConf::PROFILEDATADIR/$profilepath";
+	my $args = NfSen::NfexpireCompatArgs() . " -r $NfConf::PROFILEDATADIR/$profilepath";
 	if ( open NFEXPIRE, "$NfConf::PREFIX/nfexpire $args 2>&1 |" ) {
 		local $SIG{PIPE} = sub { syslog('err', "Pipe broke for nfexpire"); };
 		while ( <NFEXPIRE> ) {
@@ -3018,7 +3018,7 @@ sub ExpireProfile {
 	my $tstart			= $profileinfo{'tstart'};
 	my $profilesize 	= $profileinfo{'size'};
 
-	my $args = "-Y -p -e $NfConf::PROFILEDATADIR/$profile -w $NfConf::low_water ";
+	my $args = NfSen::NfexpireCompatArgs() . " -e $NfConf::PROFILEDATADIR/$profile -w $NfConf::low_water ";
 	$args .= "-s $profileinfo{'maxsize'} " if $profileinfo{'maxsize'};
 	my $_t = 3600*$profileinfo{'expire'}; 
 	$args .= "-t $_t "  if defined $profileinfo{'expire'};
