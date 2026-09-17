@@ -1,18 +1,38 @@
 Notes:
 ======
 
-This is version 1.3.11 of NfSen. It is a compatibility version for
-new nfdump-1.7.x. NfSen 1.3.11 works with nfdump 1.6.20 and later
-as well with nfdump-1.7.x.
-Do not use any earlier nfdump version < 1.6.20 as well as nfdump 1.5.x
+This is version 1.3.12 of NfSen. It works with nfdump 1.7.x or 1.8.x.
 
-Notes for nfdump-1.7.x users:
-nfdump-1.7.x uses a new binary format. Creating profiles from historical
-data, collected with nfdump-1.6.x does not work. Profiling works for
-all data version 2 from nfdump-1.7.
 Update: 1. Update nfdump - 2. Update nfsen. The order is important.
 
-nfsen-1.3.11 is php 8.1 ready.
+Notes for nfdump-1.8.x users:
+nfdump-1.8.x replaces the old bookkeeping with a per-channel .nfcapd.book
+file. On the first run after upgrading, nfprofile/nfexpire initialize a
+channel's book automatically from its existing flow files, importing its
+retention limits from the old .nfstat. No manual profile rebuild is
+required.
+
+If nfcapd starts collecting into a channel before nfprofile/nfexpire have
+initialized it, that channel's old limits are lost silently (expiry falls
+back to disabled instead of your configured size/lifetime/watermark). To
+be safe, prime every profile - including 'live' - with nfexpire before
+starting the 1.8.x nfcapd collector for the first time:
+
+    nfexpire -Y -p -r PROFILEDATADIR/<profile>
+
+Run this once per profile directory (PROFILEDATADIR/live and each of your
+configured profiles). If a channel is missed, fix it by hand afterwards
+with nfexpire -u, or remove that channel's .nfcapd.book and re-run the
+command above.
+
+This NfSen release already includes the minimal patches required for
+nfdump-1.8.x: nfexpire's compatibility flags now go through a single
+helper, alert Top1 stats use nfdump's new '-o fmt:' output since '-o pipe'
+is gone in 1.8.x, and the process/details page's output-size limit control
+(nfdump's old -L/-l flags, removed in 1.8.x) has been dropped. No further
+NfSen changes are required to run against nfdump 1.8.x.
+
+nfsen-1.3.12 is php 8.1 ready.
 
 NOTE: *nfsen is no longer under development*
 
