@@ -66,11 +66,19 @@ sub GetRRDoffset {
 		return undef;
 	}
 
+	# RRDs::VERSION encodes major.<minor><patch>, but the zero-padding width of
+	# <minor> depends on the rrdtool release: older releases pad it to its
+	# natural width (e.g. 1.7.2 -> "1.7002"), newer releases always pad it to
+	# 3 digits (e.g. 1.7.2 -> "1.007002"). Comparing the raw float breaks for
+	# the new encoding, so extract <minor> explicitly instead: <patch> is
+	# always the last 3 digits in both encodings.
+	my ( $major, $minor ) = $rrd_version =~ /^(\d+)\.(\d+?)\d{3}$/;
+
 	my $RRDoffset = 0;
-	if ( $rrd_version < 1.1 ) { # it's RRD 1.0.x
+	if ( defined $major && $major == 1 && $minor == 0 ) { # it's RRD 1.0.x
 		$RRDoffset = 77;
 	}
-	if ( $rrd_version >= 1.2 && $rrd_version < 1.99 ) {
+	if ( defined $major && $major == 1 && $minor >= 2 ) { # RRD 1.2.x and newer
 		$RRDoffset = 67;
 	}
 
